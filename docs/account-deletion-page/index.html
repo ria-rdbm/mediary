@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delete your Mediary account — Mediary</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #F7F3EC;
+      --surface: #FFFFFF;
+      --text-primary: #2B2A28;
+      --text-secondary: #6B6660;
+      --accent: #6E8F7A;
+      --accent-strong: #54705F;
+      --accent-soft: #E3ECE4;
+      --divider: #E5DFD3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .brand-name {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+    .subtitle {
+      color: var(--text-secondary);
+      margin: 0 0 32px;
+    }
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 17px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+    .card p, .card li {
+      color: var(--text-primary);
+      font-size: 15px;
+    }
+    ol, ul {
+      margin: 0;
+      padding-left: 22px;
+    }
+    li + li { margin-top: 8px; }
+    .divider {
+      border: none;
+      border-top: 1px solid var(--divider);
+      margin: 20px 0;
+    }
+    .button {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 15px;
+    }
+    .muted {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    footer {
+      margin-top: 40px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="brand-mark">🌿</div>
+      <div class="brand-name">Mediary</div>
+    </div>
+
+    <h1>Delete your account and data</h1>
+    <p class="subtitle">
+      You can request permanent deletion of your Mediary account and every
+      record associated with it, whether or not you still have the app
+      installed.
+    </p>
+
+    <div class="card">
+      <h2>Option 1 — delete it yourself in the app (fastest)</h2>
+      <ol>
+        <li>Open Mediary and sign in.</li>
+        <li>Go to <strong>Settings</strong>.</li>
+        <li>Tap <strong>Delete Account &amp; All Data</strong>.</li>
+        <li>Confirm. Your account and every record are deleted immediately
+          and permanently — this cannot be undone.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Option 2 — request deletion without the app</h2>
+      <p>
+        If you no longer have the app installed, email us from the address
+        associated with your account (the one you used with Apple or Google
+        sign-in) and we will delete your account and all associated data.
+      </p>
+      <p>
+        <a class="button" href="mailto:privacy@mediary.app?subject=Account%20deletion%20request">
+          Email privacy@mediary.app
+        </a>
+      </p>
+      <p class="muted">
+        We may ask you to confirm details only you would know (such as the
+        approximate date you created your account) before completing a
+        request made this way, to avoid deleting the wrong account.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>What gets deleted</h2>
+      <p>Both options permanently remove:</p>
+      <ul>
+        <li>Your account and sign-in identity</li>
+        <li>Every medication/treatment, injection and treatment record</li>
+        <li>Stock, batch, and stock history data</li>
+        <li>Symptoms, weight records, and notes</li>
+        <li>Appointments, providers, and provider questions</li>
+        <li>Reminders and purchase/entitlement records</li>
+      </ul>
+      <hr class="divider" />
+      <p class="muted">
+        Deletion is permanent and cannot be reversed. We do not retain a
+        backup copy of deleted health records after deletion completes.
+      </p>
+    </div>
+
+    <footer>
+      Mediary — Injection &amp; Treatment Tracker. This page exists to meet
+      Google Play's account-deletion requirements. See the in-app Privacy
+      Policy for full details on how your data is handled.
+    </footer>
+  </div>
+</body>
+</html>

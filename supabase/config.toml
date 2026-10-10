@@ -1,0 +1,48 @@
+project_id = "mediary"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "mediary://"
+additional_redirect_urls = ["mediary://"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.external.apple]
+enabled = true
+client_id = "env(APPLE_CLIENT_ID)"
+secret = "env(APPLE_CLIENT_SECRET)"
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_WEB_CLIENT_ID)"
+secret = "env(GOOGLE_WEB_CLIENT_SECRET)"
+
+[edge_runtime]
+enabled = true
+
+[functions.revenuecat-webhook]
+verify_jwt = false
+
+[functions.sync-entitlement]
+verify_jwt = true
+
+[functions.apple-token-exchange]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
