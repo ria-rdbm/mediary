@@ -154,14 +154,7 @@ export default function HomeScreen() {
 
   const quickActions: QuickAction[] = [
     { key: 'add', icon: 'add', label: 'Add', onPress: () => setQuickAddVisible(true), primary: true },
-    { key: 'history', icon: 'time-outline', label: 'History', onPress: () => router.push('/(app)/history') },
     { key: 'providers', icon: 'people-outline', label: 'Providers', onPress: () => router.push('/provider') },
-    {
-      key: 'summary',
-      icon: 'document-text-outline',
-      label: 'Summary',
-      onPress: () => router.push('/(app)/health-summary'),
-    },
   ];
 
   return (
@@ -365,7 +358,8 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: spacing.xl,
     marginTop: spacing.lg,
   },
   quickAction: {
