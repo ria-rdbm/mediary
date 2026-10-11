@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Section } from '@/components/ui/Section';
@@ -8,13 +8,13 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { typography, spacing } from '@/theme';
 import { useAuth } from '@/context/AuthProvider';
 import { useEntitlement } from '@/context/EntitlementProvider';
-import { deleteAccount } from '@/services/account';
+import { deleteAccount, syncEntitlement } from '@/services/account';
 import { supabase } from '@/lib/supabase';
-import { resetRevenueCatIdentity } from '@/lib/revenuecat';
+import { resetRevenueCatIdentity, restorePurchases, hasLifetimeEntitlement } from '@/lib/revenuecat';
 
 export default function SettingsScreen() {
   const { signOut } = useAuth();
-  const { isLifetime, isTrialActive, trialDaysLeft } = useEntitlement();
+  const { isLifetime, isTrialActive, trialDaysLeft, refetch } = useEntitlement();
 
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
@@ -40,6 +40,25 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleRestore = async () => {
+    try {
+      const info = await restorePurchases();
+      if (hasLifetimeEntitlement(info)) {
+        try {
+          await syncEntitlement(Platform.OS === 'android' ? 'android' : 'ios');
+        } catch (err) {
+          console.warn('sync-entitlement failed (webhook will catch up)', err);
+        }
+        refetch();
+        Alert.alert('Purchase restored', 'Lifetime Access is active on this account.');
+      } else {
+        Alert.alert('Nothing to restore', 'No previous purchase was found for this account.');
+      }
+    } catch {
+      Alert.alert('Restore failed', 'Please try again.');
+    }
+  };
+
   const purchaseStatusLabel = isLifetime
     ? 'Lifetime Access'
     : isTrialActive
@@ -55,7 +74,7 @@ export default function SettingsScreen() {
         {!isLifetime && (
           <ListRow title="Unlock Lifetime Access" showChevron onPress={() => router.push('/paywall')} />
         )}
-        <ListRow title="Restore Purchase" showChevron onPress={() => router.push('/paywall')} />
+        <ListRow title="Restore Purchase" onPress={handleRestore} />
       </Section>
 
       <Section title="Manage">
