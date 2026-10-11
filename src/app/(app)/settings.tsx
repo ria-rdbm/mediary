@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Text, StyleSheet, Linking, Share, Alert } from 'react-native';
+import { Text, StyleSheet, Linking } from 'react-native';
 import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
@@ -10,7 +10,7 @@ import { typography, spacing } from '@/theme';
 import { useAuth } from '@/context/AuthProvider';
 import { useEntitlement } from '@/context/EntitlementProvider';
 import { deleteAccount } from '@/services/account';
-import { buildHistoryCsv } from '@/services/export';
+import { ShareHistorySheet } from '@/components/composed/ShareHistorySheet';
 import { hasNotificationPermission } from '@/lib/notifications';
 import { LEGAL_CONTACT_EMAIL } from '@/constants/legalContent';
 import { supabase } from '@/lib/supabase';
@@ -26,7 +26,7 @@ export default function SettingsScreen() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [notificationsOn, setNotificationsOn] = useState<boolean | null>(null);
-  const [exporting, setExporting] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
 
   // Re-check on focus: the user may have changed it in the iOS Settings app.
   useFocusEffect(
@@ -34,26 +34,6 @@ export default function SettingsScreen() {
       void hasNotificationPermission().then(setNotificationsOn);
     }, []),
   );
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const { csv, rowCount } = await buildHistoryCsv();
-      if (rowCount === 0) {
-        Alert.alert('Nothing to export', 'Add some records first.');
-        return;
-      }
-      // The share promise stays pending while the sheet is open, so stop
-      // showing "Preparing export…" before presenting it.
-      setExporting(false);
-      await Share.share({ message: csv, title: 'Mediary history' });
-    } catch (err) {
-      console.warn('Export failed', err);
-      Alert.alert('Could not export', 'Please try again.');
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const handleDelete = async () => {
     setDeleteError(null);
@@ -102,11 +82,7 @@ export default function SettingsScreen() {
           showChevron
           onPress={() => void Linking.openSettings()}
         />
-        <ListRow
-          title={exporting ? 'Preparing export…' : 'Export my data (CSV)'}
-          showChevron
-          onPress={exporting ? undefined : () => void handleExport()}
-        />
+        <ListRow title="Share my history" subtitle="Send a period as text to another app" showChevron onPress={() => setShareVisible(true)} />
       </Section>
 
       <Section title="Privacy">
@@ -133,6 +109,8 @@ export default function SettingsScreen() {
         Mediary helps you record and organise your treatment information. It does not provide medical advice,
         diagnosis, or treatment recommendations.
       </Text>
+
+      <ShareHistorySheet visible={shareVisible} onClose={() => setShareVisible(false)} />
 
       <ConfirmationDialog
         visible={signOutVisible}
