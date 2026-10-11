@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
@@ -8,12 +8,16 @@ import { Section } from '@/components/ui/Section';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Toggle } from '@/components/ui/Toggle';
-import { PrimaryButton } from '@/components/ui/Button';
+import { PrimaryButton, TextButton } from '@/components/ui/Button';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { LoadingState } from '@/components/ui/States';
 import { AmountUnitField } from '@/components/composed/AmountUnitField';
 import type { DoseUnit } from '@/constants/units';
 import { colors, spacing } from '@/theme';
-import { useMedication, useUpdateMedication } from '@/hooks/useMedications';
+import { useMedication, useUpdateMedication, useDeleteMedication } from '@/hooks/useMedications';
+import { HasHistoryError } from '@/services/medications';
+import { fetchRemindersForMedication } from '@/services/reminders';
+import { cancelLocalNotification } from '@/lib/notifications';
 import { useProviders } from '@/hooks/useProviders';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
 
@@ -22,7 +26,9 @@ export default function EditMedicationScreen() {
   const { data: medication, isLoading } = useMedication(id);
   const { data: providers } = useProviders();
   const updateMedication = useUpdateMedication(id);
+  const deleteMedication = useDeleteMedication(id);
   const { guard } = useWriteGuard();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const [name, setName] = useState('');
   const [color, setColor] = useState<string | null>(null);
@@ -79,6 +85,28 @@ export default function EditMedicationScreen() {
       router.back();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setConfirmDelete(false);
+    if (!guard()) return;
+    try {
+      const reminders = await fetchRemindersForMedication(id);
+      await deleteMedication.mutateAsync();
+      for (const reminder of reminders) {
+        if (reminder.notificationId) await cancelLocalNotification(reminder.notificationId);
+      }
+      router.dismissAll();
+    } catch (err) {
+      if (err instanceof HasHistoryError) {
+        Alert.alert(
+          'Cannot delete',
+          'This medication has records or stock history. Mark it as Finished instead to keep your history.',
+        );
+      } else {
+        Alert.alert('Could not delete', 'Please try again.');
+      }
     }
   };
 
@@ -146,6 +174,17 @@ export default function EditMedicationScreen() {
       </Section>
 
       <PrimaryButton label="Save" onPress={handleSave} loading={saving} style={styles.saveButton} />
+      <TextButton label="Delete medication" tone="destructive" onPress={() => setConfirmDelete(true)} style={styles.deleteButton} />
+
+      <ConfirmationDialog
+        visible={confirmDelete}
+        title="Delete this medication?"
+        message="Only medications without records or stock history can be deleted. Its reminders will be removed."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </Screen>
   );
 }
@@ -165,6 +204,10 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: spacing.lg,
+  },
+  deleteButton: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
     marginBottom: spacing.xl,
   },
 });

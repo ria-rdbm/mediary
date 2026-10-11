@@ -107,3 +107,21 @@ export async function setMedicationStatus(
   if (error) throw error;
   return mapMedication(data);
 }
+
+/**
+ * Deletes a medication that has no treatment records or stock history. The
+ * database restricts deletion otherwise, which surfaces as `HasHistoryError`.
+ */
+export class HasHistoryError extends Error {
+  constructor() {
+    super('Medication has records or stock history');
+  }
+}
+
+export async function deleteMedication(id: string): Promise<void> {
+  const { error } = await supabase.from('medications').delete().eq('id', id);
+  if (error) {
+    if (error.code === '23503') throw new HasHistoryError();
+    throw error;
+  }
+}

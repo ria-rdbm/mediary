@@ -53,3 +53,15 @@ export function useSetMedicationStatus(id: string) {
     },
   });
 }
+
+export function useDeleteMedication(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => medicationsService.deleteMedication(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['medications'] });
+      void queryClient.removeQueries({ queryKey: ['medication', id] });
+      void queryClient.invalidateQueries({ queryKey: ['medication-reminders'] });
+    },
+  });
+}
