@@ -181,13 +181,6 @@ export default function HomeScreen() {
                 : `${activeCount} active medication${activeCount === 1 ? '' : 's'}`}
             </Text>
           </View>
-          <Pressable
-            accessibilityLabel="Settings"
-            onPress={() => router.push('/(app)/settings')}
-            style={styles.heroIconButton}
-          >
-            <Ionicons name="settings-outline" size={20} color={colors.textOnAccent} />
-          </Pressable>
         </View>
       </LinearGradient>
 
@@ -341,14 +334,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: 'rgba(255,255,255,0.82)',
     marginTop: spacing.xxs,
-  },
-  heroIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: spacing.lg,
