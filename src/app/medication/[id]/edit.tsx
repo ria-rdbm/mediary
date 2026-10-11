@@ -10,6 +10,8 @@ import { Select } from '@/components/ui/Select';
 import { Toggle } from '@/components/ui/Toggle';
 import { PrimaryButton } from '@/components/ui/Button';
 import { LoadingState } from '@/components/ui/States';
+import { AmountUnitField } from '@/components/composed/AmountUnitField';
+import type { DoseUnit } from '@/constants/units';
 import { colors, spacing } from '@/theme';
 import { useMedication, useUpdateMedication } from '@/hooks/useMedications';
 import { useProviders } from '@/hooks/useProviders';
@@ -25,6 +27,9 @@ export default function EditMedicationScreen() {
   const [name, setName] = useState('');
   const [color, setColor] = useState<string | null>(null);
   const [defaultProviderId, setDefaultProviderId] = useState<string | null>(null);
+  const [amount, setAmount] = useState('');
+  const [unit, setUnit] = useState<DoseUnit | null>(null);
+  const [customUnit, setCustomUnit] = useState('');
   const [autoDeduct, setAutoDeduct] = useState(true);
   const [stockUsed, setStockUsed] = useState('');
   const [lowStockThreshold, setLowStockThreshold] = useState('');
@@ -39,6 +44,9 @@ export default function EditMedicationScreen() {
     setName(medication.name);
     setColor(medication.color);
     setDefaultProviderId(medication.defaultProviderId);
+    setAmount(medication.defaultAmount != null ? String(medication.defaultAmount) : '');
+    setUnit(medication.defaultAmountUnit);
+    setCustomUnit(medication.defaultAmountUnitCustom ?? '');
     setAutoDeduct(medication.autoDeductStock);
     setStockUsed(medication.stockUsedPerInjection != null ? String(medication.stockUsedPerInjection) : '');
     setLowStockThreshold(medication.lowStockThreshold != null ? String(medication.lowStockThreshold) : '');
@@ -61,6 +69,9 @@ export default function EditMedicationScreen() {
         name,
         color,
         defaultProviderId,
+        defaultAmount: amount ? Number(amount) : null,
+        defaultAmountUnit: unit,
+        defaultAmountUnitCustom: unit === 'Other' ? customUnit.trim() || null : null,
         autoDeductStock: autoDeduct,
         stockUsedPerInjection: stockUsed ? Number(stockUsed) : null,
         lowStockThreshold: lowStockThreshold ? Number(lowStockThreshold) : null,
@@ -89,6 +100,17 @@ export default function EditMedicationScreen() {
             </Pressable>
           ))}
         </View>
+      </Section>
+
+      <Section title="Default amount (optional)" spacingTop="md">
+        <AmountUnitField
+          amount={amount}
+          onAmountChange={setAmount}
+          unit={unit}
+          onUnitChange={setUnit}
+          customUnit={customUnit}
+          onCustomUnitChange={setCustomUnit}
+        />
       </Section>
 
       <Section title="Default provider / clinic" spacingTop="md">

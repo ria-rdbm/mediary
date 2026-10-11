@@ -25,7 +25,7 @@ export interface SymptomFormValues {
 
 export function defaultSymptomFormValues(startAt: Date = combineDateAndTime(new Date(), defaultRecordTime())): SymptomFormValues {
   return {
-    name: DEFAULT_SYMPTOMS[0],
+    name: '',
     isCustomName: false,
     severity: 'mild',
     medicationId: null,
@@ -66,7 +66,7 @@ export function SymptomForm({
     <View>
       <Select
         label="Symptom"
-        value={values.isCustomName ? 'Other' : values.name}
+        value={values.isCustomName ? 'Other' : values.name || null}
         options={DEFAULT_SYMPTOMS.map((s) => ({ value: s, label: s }))}
         onChange={(v) => {
           update('isCustomName', v === 'Other');
