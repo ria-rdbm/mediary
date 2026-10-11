@@ -153,8 +153,10 @@ export default function HomeScreen() {
   const greeting = greetingForHour(new Date(now).getHours());
 
   const quickActions: QuickAction[] = [
-    { key: 'add', icon: 'add', label: 'Add', onPress: () => setQuickAddVisible(true), primary: true },
-    { key: 'providers', icon: 'people-outline', label: 'Providers', onPress: () => router.push('/provider') },
+    { key: 'log', icon: 'water-outline', label: 'Log', onPress: () => router.push('/record/new'), primary: true },
+    { key: 'symptom', icon: 'pulse-outline', label: 'Symptom', onPress: () => router.push('/symptom/new') },
+    { key: 'weight', icon: 'scale-outline', label: 'Weight', onPress: () => router.push('/weight/new') },
+    { key: 'more', icon: 'add', label: 'More', onPress: () => setQuickAddVisible(true) },
   ];
 
   return (
@@ -358,8 +360,7 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xl,
+    justifyContent: 'space-between',
     marginTop: spacing.lg,
   },
   quickAction: {
