@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Text, StyleSheet, Linking, Share, Alert } from 'react-native';
+import Constants from 'expo-constants';
+import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Section } from '@/components/ui/Section';
 import { ListRow } from '@/components/ui/ListRow';
@@ -9,6 +10,9 @@ import { typography, spacing } from '@/theme';
 import { useAuth } from '@/context/AuthProvider';
 import { useEntitlement } from '@/context/EntitlementProvider';
 import { deleteAccount } from '@/services/account';
+import { buildHistoryCsv } from '@/services/export';
+import { hasNotificationPermission } from '@/lib/notifications';
+import { LEGAL_CONTACT_EMAIL } from '@/constants/legalContent';
 import { supabase } from '@/lib/supabase';
 import { resetRevenueCatIdentity } from '@/lib/revenuecat';
 
@@ -20,6 +24,33 @@ export default function SettingsScreen() {
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [notificationsOn, setNotificationsOn] = useState<boolean | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  // Re-check on focus: the user may have changed it in the iOS Settings app.
+  useFocusEffect(
+    useCallback(() => {
+      void hasNotificationPermission().then(setNotificationsOn);
+    }, []),
+  );
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { csv, rowCount } = await buildHistoryCsv();
+      if (rowCount === 0) {
+        Alert.alert('Nothing to export', 'Add some records first.');
+        return;
+      }
+      await Share.share({ message: csv, title: 'Mediary history' });
+    } catch (err) {
+      console.warn('Export failed', err);
+      Alert.alert('Could not export', 'Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleDelete = async () => {
     setDeleteError(null);
@@ -61,9 +92,33 @@ export default function SettingsScreen() {
         <ListRow title="Providers & clinics" showChevron onPress={() => router.push('/provider')} />
       </Section>
 
+      <Section title="Preferences">
+        <ListRow
+          title="Notifications"
+          subtitle={notificationsOn == null ? undefined : notificationsOn ? 'On' : 'Off — tap to turn on in iOS Settings'}
+          showChevron
+          onPress={() => void Linking.openSettings()}
+        />
+        <ListRow
+          title={exporting ? 'Preparing export…' : 'Export my data (CSV)'}
+          showChevron
+          onPress={exporting ? undefined : () => void handleExport()}
+        />
+      </Section>
+
       <Section title="Privacy">
         <ListRow title="Privacy Policy" showChevron onPress={() => router.push('/legal/privacy')} />
         <ListRow title="Terms of Use" showChevron onPress={() => router.push('/legal/terms')} />
+      </Section>
+
+      <Section title="Support">
+        <ListRow
+          title="Contact support"
+          subtitle={LEGAL_CONTACT_EMAIL}
+          showChevron
+          onPress={() => void Linking.openURL(`mailto:${LEGAL_CONTACT_EMAIL}`)}
+        />
+        <ListRow title="Version" subtitle={Constants.expoConfig?.version ?? '—'} />
       </Section>
 
       <Section title="Account">
