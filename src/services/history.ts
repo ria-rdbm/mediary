@@ -136,6 +136,9 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
     const { data, error } = await query;
     if (error) throw error;
     for (const t of data ?? []) {
+      // Reversals are bookkeeping for deleted records; the per-medication
+      // stock history screen still lists them.
+      if (t.type === 'reversal') continue;
       const occurredLocal = captureLocalDateTime(new Date(t.created_at)).local;
       const localKey = localDateKey(occurredLocal);
       if (filter.startDateKey && localKey < filter.startDateKey) continue;
@@ -146,9 +149,7 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
           ? 'Stock added'
           : t.type === 'manual_adjustment'
             ? 'Manual adjustment'
-            : t.type === 'reversal'
-              ? 'Stock reversal'
-              : 'Stock used';
+            : 'Stock used';
       items.push({
         id: t.id,
         type: 'stock',
