@@ -19,8 +19,10 @@ export default function SettingsScreen() {
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = async () => {
+    setDeleteError(null);
     setDeleting(true);
     try {
       await deleteAccount();
@@ -32,6 +34,7 @@ export default function SettingsScreen() {
       await supabase.auth.signOut({ scope: 'local' });
     } catch (err) {
       console.warn('Account deletion failed', err);
+      setDeleteError('Could not delete your account. Please try again.');
     } finally {
       setDeleting(false);
     }
@@ -88,7 +91,7 @@ export default function SettingsScreen() {
       <ConfirmationDialog
         visible={deleteVisible}
         title="Delete your account?"
-        message="This will permanently delete your Mediary account and all associated data. This action cannot be undone."
+        message={`This will permanently delete your Mediary account and all associated data. This action cannot be undone.${deleteError ? `\n\n${deleteError}` : ''}`}
         confirmLabel={deleting ? 'Deleting…' : 'Delete Account'}
         destructive
         onConfirm={handleDelete}

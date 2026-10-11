@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { parseDateKey } from '@/lib/dateTime';
 import { mapMedication, mapTreatmentRecord, mapSymptom, mapAppointment, mapWeightRecord } from '@/lib/mappers';
 import type { Medication, TreatmentRecord, Symptom, Appointment, WeightRecord } from '@/types/domain';
 
@@ -20,8 +21,11 @@ export async function fetchHealthSummary(
   endDateKey: string,
   includeWeight: boolean,
 ): Promise<HealthSummaryData> {
-  const startUtc = `${startDateKey}T00:00:00.000Z`;
-  const endUtc = `${endDateKey}T23:59:59.999Z`;
+  // Date keys are the user's local days, so bound the range by local midnight.
+  const startUtc = parseDateKey(startDateKey).toISOString();
+  const endDay = parseDateKey(endDateKey);
+  endDay.setDate(endDay.getDate() + 1);
+  const endUtc = new Date(endDay.getTime() - 1).toISOString();
 
   const { data: medicationRows, error: medError } = await supabase
     .from('medications')

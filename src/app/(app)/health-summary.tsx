@@ -5,11 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
 import { PrimaryButton } from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
+import { DatePickerField } from '@/components/ui/DateTimeFields';
 import { EmptyState, LoadingState } from '@/components/ui/States';
 import { colors, typography, spacing, radius } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
 import { CATEGORY_ICONS, CATEGORY_DEFAULT_COLOR_INDEX } from '@/constants/categories';
-import { todayDateKey } from '@/lib/dateTime';
+import { parseDateKey, todayDateKey } from '@/lib/dateTime';
 
 type Period = '30d' | '3m' | '6m' | 'custom';
 
@@ -36,16 +37,20 @@ export default function HealthSummarySelectionScreen() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [period, setPeriod] = useState<Period>('30d');
   const [includeWeight, setIncludeWeight] = useState(true);
+  const [customStart, setCustomStart] = useState(() => parseDateKey(periodToStartDateKey('3m')));
+  const [customEnd, setCustomEnd] = useState(() => new Date());
 
   const toggle = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const dateRange = useMemo(() => {
-    const endDateKey = todayDateKey();
-    const startDateKey = period === 'custom' ? periodToStartDateKey('3m') : periodToStartDateKey(period);
-    return { startDateKey, endDateKey };
-  }, [period]);
+    if (period === 'custom') {
+      return { startDateKey: todayDateKey(customStart), endDateKey: todayDateKey(customEnd) };
+    }
+    return { startDateKey: periodToStartDateKey(period), endDateKey: todayDateKey() };
+  }, [period, customStart, customEnd]);
+  const invalidRange = dateRange.startDateKey > dateRange.endDateKey;
 
   const handleView = () => {
     router.push({
@@ -111,6 +116,14 @@ export default function HealthSummarySelectionScreen() {
         ))}
       </View>
 
+      {period === 'custom' && (
+        <View style={styles.customRow}>
+          <DatePickerField label="From" value={customStart} onChange={setCustomStart} maximumDate={new Date()} containerStyle={styles.customField} />
+          <DatePickerField label="To" value={customEnd} onChange={setCustomEnd} maximumDate={new Date()} containerStyle={styles.customField} />
+        </View>
+      )}
+      {invalidRange && <Text style={styles.rangeError}>The start date must be before the end date.</Text>}
+
       <View style={styles.toggleRow}>
         <Toggle label="Include weight trend" value={includeWeight} onValueChange={setIncludeWeight} />
       </View>
@@ -118,7 +131,7 @@ export default function HealthSummarySelectionScreen() {
       <PrimaryButton
         label="View Health Summary"
         onPress={handleView}
-        disabled={selectedIds.length === 0}
+        disabled={selectedIds.length === 0 || invalidRange}
         style={styles.viewButton}
       />
     </Screen>
@@ -135,6 +148,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     marginTop: spacing.sm,
   },
+  customRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  customField: { flex: 1 },
+  rangeError: { ...typography.bodySecondary, color: colors.error, marginTop: spacing.xs },
   medList: { gap: spacing.xs },
   medRow: {
     flexDirection: 'row',
