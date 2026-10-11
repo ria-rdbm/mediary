@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -9,11 +9,23 @@ import { TimelineRow } from '@/components/ui/TimelineRow';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
 import { MonthCalendar } from '@/components/composed/MonthCalendar';
 import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
-import { colors, typography, spacing } from '@/theme';
+import { colors, typography, spacing, radius } from '@/theme';
 import { useHistory } from '@/hooks/useHistory';
 import { formatLocalDayHeading, formatLocalTime, localDateKey, todayDateKey } from '@/lib/dateTime';
+import { useUpcomingMedicationReminders } from '@/hooks/useReminders';
+import { useMedications } from '@/hooks/useMedications';
 import { HISTORY_ICONS, HISTORY_COLORS, historyItemRoute } from '@/lib/historyIcons';
-import type { HistoryItem } from '@/types/domain';
+import type { HistoryItem, HistoryRecordType } from '@/types/domain';
+
+const TYPE_FILTERS: { value: HistoryRecordType | 'all'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'treatment', label: 'Treatments' },
+  { value: 'symptom', label: 'Symptoms' },
+  { value: 'weight', label: 'Weight' },
+  { value: 'note', label: 'Notes' },
+  { value: 'appointment', label: 'Appointments' },
+  { value: 'stock', label: 'Stock' },
+];
 
 function groupByDay(items: HistoryItem[]): { dateKey: string; items: HistoryItem[] }[] {
   const groups = new Map<string, HistoryItem[]>();
@@ -35,16 +47,39 @@ export default function HistoryScreen() {
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth());
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(todayDateKey());
   const [addVisible, setAddVisible] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<HistoryRecordType | 'all'>('all');
 
-  const { data: items, isLoading, isError, refetch, isRefetching } = useHistory({ searchText: search });
+  const { data: items, isLoading, isError, refetch, isRefetching } = useHistory({
+    searchText: search,
+    types: typeFilter === 'all' ? undefined : [typeFilter],
+  });
+  const { data: reminders } = useUpcomingMedicationReminders();
+  const { data: medications } = useMedications(['active', 'paused']);
+
+  // Other screens (or another device) may have changed data while this tab
+  // stayed mounted, so refresh whenever it regains focus.
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
+
+  const reminderDateKeys = useMemo(() => new Set((reminders ?? []).map((r) => r.reminderDate)), [reminders]);
+  const selectedDayReminders = useMemo(() => {
+    const names = new Map((medications ?? []).map((m) => [m.id, m.name]));
+    return (reminders ?? [])
+      .filter((r) => r.reminderDate === selectedDateKey && names.has(r.medicationId))
+      .map((r) => ({ id: r.id, medicationId: r.medicationId, name: names.get(r.medicationId)!, time: r.reminderTime }));
+  }, [reminders, medications, selectedDateKey]);
 
   const grouped = useMemo(() => groupByDay(items ?? []), [items]);
 
   const markedDateKeys = useMemo(() => {
     const set = new Set<string>();
     for (const item of items ?? []) set.add(localDateKey(item.occurredLocal));
+    for (const key of reminderDateKeys) set.add(key);
     return set;
-  }, [items]);
+  }, [items, reminderDateKeys]);
 
   const selectedDayItems = useMemo(
     () => (items ?? []).filter((item) => localDateKey(item.occurredLocal) === selectedDateKey),
@@ -75,6 +110,19 @@ export default function HistoryScreen() {
         onChangeText={setSearch}
         containerStyle={styles.search}
       />
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterContent}>
+        {TYPE_FILTERS.map((f) => (
+          <Pressable
+            key={f.value}
+            accessibilityRole="button"
+            onPress={() => setTypeFilter(f.value)}
+            style={[styles.filterChip, typeFilter === f.value && styles.filterChipActive]}
+          >
+            <Text style={[styles.filterLabel, typeFilter === f.value && styles.filterLabelActive]}>{f.label}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       {isLoading ? (
         <LoadingState />
@@ -135,7 +183,18 @@ export default function HistoryScreen() {
                 </Pressable>
               </View>
             )}
-            {selectedDayItems.length === 0 ? (
+            {selectedDayReminders.map((r) => (
+              <TimelineRow
+                key={`reminder-${r.id}`}
+                time={formatLocalTime(`${selectedDateKey}T${r.time}:00`)}
+                title={`${r.name} — Reminder`}
+                icon="notifications-outline"
+                accentColor={colors.accentStrong}
+                isLast={false}
+                onPress={() => router.push(`/medication/${r.medicationId}/reminder`)}
+              />
+            ))}
+            {selectedDayItems.length === 0 && selectedDayReminders.length === 0 ? (
               <Text style={[typography.bodySecondary, styles.noRecords]}>No records on this day.</Text>
             ) : (
               selectedDayItems.map((item, index) => (
@@ -162,6 +221,17 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   title: { marginTop: spacing.sm, marginBottom: spacing.md },
   search: { marginTop: spacing.md },
+  filterRow: { marginTop: spacing.xs, marginBottom: spacing.xs, flexGrow: 0 },
+  filterContent: { gap: spacing.xs, paddingVertical: spacing.xxs },
+  filterChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  filterChipActive: { backgroundColor: colors.accent },
+  filterLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  filterLabelActive: { color: colors.textOnAccent },
   timeline: { marginTop: spacing.sm },
   dayGroup: { marginBottom: spacing.lg },
   dayHeading: {
