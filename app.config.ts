@@ -1,5 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 
+const googleIosUrlScheme = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME;
 const BUNDLE_ID = 'nz.co.artifactai.mediary';
 
 const config: ExpoConfig = {
@@ -59,13 +60,12 @@ const config: ExpoConfig = {
         color: '#8BA893',
       },
     ],
-    [
-      '@react-native-google-signin/google-signin',
-      {
-        iosUrlScheme: process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME ?? 'com.googleusercontent.apps.REPLACE_ME',
-      },
-    ],
     '@react-native-community/datetimepicker',
+    // Only register the Google URL scheme once a real iOS client exists: a
+    // placeholder scheme is rejected by App Store Connect (ITMS-90158).
+    ...(googleIosUrlScheme
+      ? [['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }] as [string, object]]
+      : []),
   ],
   experiments: {
     typedRoutes: true,
