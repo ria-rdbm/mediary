@@ -7,6 +7,8 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { TimelineRow } from '@/components/ui/TimelineRow';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
 import { MonthCalendar } from '@/components/composed/MonthCalendar';
+import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
+import { SecondaryButton } from '@/components/ui/Button';
 import { colors, typography, spacing } from '@/theme';
 import { useHistory } from '@/hooks/useHistory';
 import { formatLocalDayHeading, formatLocalTime, localDateKey, todayDateKey } from '@/lib/dateTime';
@@ -32,6 +34,7 @@ export default function HistoryScreen() {
   const [calendarYear, setCalendarYear] = useState(now.getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth());
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(todayDateKey());
+  const [addVisible, setAddVisible] = useState(false);
 
   const { data: items, isLoading, isError, refetch, isRefetching } = useHistory({ searchText: search });
 
@@ -114,6 +117,13 @@ export default function HistoryScreen() {
               setCalendarMonth(m);
             }}
           />
+          {selectedDateKey && (
+            <SecondaryButton
+              label={`Add on ${formatLocalDayHeading(`${selectedDateKey}T00:00:00`)}`}
+              onPress={() => setAddVisible(true)}
+              style={styles.addOnDay}
+            />
+          )}
           <View style={styles.selectedDaySection}>
             {selectedDayItems.length === 0 ? (
               <Text style={[typography.bodySecondary, styles.noRecords]}>No records on this day.</Text>
@@ -134,6 +144,7 @@ export default function HistoryScreen() {
           </View>
         </View>
       )}
+      <QuickAddSheet visible={addVisible} onClose={() => setAddVisible(false)} dateKey={selectedDateKey} />
     </Screen>
   );
 }
@@ -147,6 +158,9 @@ const styles = StyleSheet.create({
     ...typography.metadata,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
+  },
+  addOnDay: {
+    marginTop: spacing.md,
   },
   selectedDaySection: {
     marginTop: spacing.lg,

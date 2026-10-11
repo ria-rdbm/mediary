@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
@@ -9,15 +9,16 @@ import { PrimaryButton } from '@/components/ui/Button';
 import { typography, spacing, colors } from '@/theme';
 import { useCreateWeightRecord } from '@/hooks/useWeight';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
-import { combineDateAndTime, defaultRecordTime } from '@/lib/dateTime';
+import { combineDateAndTime, initialDateTimeForDateKey } from '@/lib/dateTime';
 
 export default function NewWeightScreen() {
+  const { date } = useLocalSearchParams<{ date?: string }>();
   const createWeight = useCreateWeightRecord();
   const { guard } = useWriteGuard();
 
   const [weight, setWeight] = useState('');
   const [note, setNote] = useState('');
-  const [recordedAt, setRecordedAt] = useState(combineDateAndTime(new Date(), defaultRecordTime()));
+  const [recordedAt, setRecordedAt] = useState(initialDateTimeForDateKey(date));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

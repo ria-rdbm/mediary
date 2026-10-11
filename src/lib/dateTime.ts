@@ -50,6 +50,20 @@ export function combineDateAndTime(datePart: Date, timePart: Date): Date {
   return combined;
 }
 
+/**
+ * Initial date/time for a new entry opened for a specific calendar day
+ * (`date` route param). Falls back to now when the key is missing/invalid, or
+ * when the day is in the future and future entries aren't allowed.
+ */
+export function initialDateTimeForDateKey(dateKey?: string | null, allowFuture = false): Date {
+  const now = new Date();
+  const time = defaultRecordTime(now);
+  if (!dateKey || !isValidDateKey(dateKey)) return time;
+  const day = parseDateKey(dateKey);
+  if (!allowFuture && day > now) return time;
+  return combineDateAndTime(day, time);
+}
+
 /** Default time for a new record: current hour, minute rounded to :00. */
 export function defaultRecordTime(now: Date = new Date()): Date {
   const rounded = new Date(now);

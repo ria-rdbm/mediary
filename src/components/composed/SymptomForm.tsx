@@ -23,13 +23,13 @@ export interface SymptomFormValues {
   notes: string;
 }
 
-export function defaultSymptomFormValues(): SymptomFormValues {
+export function defaultSymptomFormValues(startAt: Date = combineDateAndTime(new Date(), defaultRecordTime())): SymptomFormValues {
   return {
     name: DEFAULT_SYMPTOMS[0],
     isCustomName: false,
     severity: 'mild',
     medicationId: null,
-    startAt: combineDateAndTime(new Date(), defaultRecordTime()),
+    startAt,
     endAt: null,
     isOngoing: true,
     notes: '',

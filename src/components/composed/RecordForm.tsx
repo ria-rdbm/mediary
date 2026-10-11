@@ -217,6 +217,7 @@ export function RecordForm({ medications, initial, submitLabel, onSubmit, onSubm
 export function defaultRecordFormValues(
   medicationId = '',
   medication?: Pick<MedicationWithStock,'defaultAmount' | 'defaultAmountUnit' | 'defaultAmountUnitCustom' | 'lastAmountUnit' | 'lastAmountUnitCustom'>,
+  occurredAt: Date = combineDateAndTime(new Date(), defaultRecordTime()),
 ): RecordFormValues {
   const unit = medication?.lastAmountUnit ?? medication?.defaultAmountUnit ?? null;
   const unitCustom =
@@ -226,7 +227,7 @@ export function defaultRecordFormValues(
   return {
     medicationId,
     taken: true,
-    occurredAt: combineDateAndTime(new Date(), defaultRecordTime()),
+    occurredAt,
     amount: medication?.defaultAmount != null ? String(medication.defaultAmount) : '',
     amountUnit: unit,
     amountUnitCustom: unitCustom,
