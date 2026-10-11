@@ -246,7 +246,7 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        <Section title="Upcoming">
+        <Section title="Upcoming & attention">
         {upcoming.length === 0 ? (
           <Text style={typography.bodySecondary}>Nothing coming up right now.</Text>
         ) : (
