@@ -55,17 +55,26 @@ export default function MedicationDetailScreen() {
   const nextReminder = reminders?.find((r) => r.isActive && r.reminderDate >= todayDateKey());
   const recentRecords = (records ?? []).slice(0, 5);
 
+  // iOS can't present a second Modal while another one is still on screen,
+  // and the whole screen stops responding if we try. Close the status sheet
+  // first and open the follow-up sheet once it is gone.
+  const openAfterStatusSheet = (open: () => void) => {
+    setStatusSheetVisible(false);
+    setTimeout(open, 350);
+  };
+
   const handleStatusChange = async (status: MedicationStatus) => {
     if (!guard()) return;
     if (status === 'finished') {
-      setConfirmingFinish(true);
+      openAfterStatusSheet(() => setConfirmingFinish(true));
       return;
     }
     const wasInactive = medication.status === 'paused' || medication.status === 'finished';
     await setStatus.mutateAsync({ status });
-    setStatusSheetVisible(false);
     if (status === 'active' && wasInactive) {
-      setReviewRemindersVisible(true);
+      openAfterStatusSheet(() => setReviewRemindersVisible(true));
+    } else {
+      setStatusSheetVisible(false);
     }
   };
 
