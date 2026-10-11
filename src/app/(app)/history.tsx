@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Input } from '@/components/ui/Input';
@@ -8,7 +9,6 @@ import { TimelineRow } from '@/components/ui/TimelineRow';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
 import { MonthCalendar } from '@/components/composed/MonthCalendar';
 import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
-import { SecondaryButton } from '@/components/ui/Button';
 import { colors, typography, spacing } from '@/theme';
 import { useHistory } from '@/hooks/useHistory';
 import { formatLocalDayHeading, formatLocalTime, localDateKey, todayDateKey } from '@/lib/dateTime';
@@ -117,14 +117,24 @@ export default function HistoryScreen() {
               setCalendarMonth(m);
             }}
           />
-          {selectedDateKey && (
-            <SecondaryButton
-              label={`Add on ${formatLocalDayHeading(`${selectedDateKey}T00:00:00`)}`}
-              onPress={() => setAddVisible(true)}
-              style={styles.addOnDay}
-            />
-          )}
           <View style={styles.selectedDaySection}>
+            {selectedDateKey && (
+              <View style={styles.dayHeader}>
+                <Text style={[typography.sectionTitle, styles.dayHeaderTitle]} numberOfLines={1}>
+                  {formatLocalDayHeading(`${selectedDateKey}T00:00:00`)}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Add entry on this day"
+                  onPress={() => setAddVisible(true)}
+                  style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.6 }]}
+                  hitSlop={6}
+                >
+                  <Ionicons name="add" size={18} color={colors.accentStrong} />
+                  <Text style={styles.addPillLabel}>Add</Text>
+                </Pressable>
+              </View>
+            )}
             {selectedDayItems.length === 0 ? (
               <Text style={[typography.bodySecondary, styles.noRecords]}>No records on this day.</Text>
             ) : (
@@ -159,9 +169,24 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
   },
-  addOnDay: {
-    marginTop: spacing.md,
+  dayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
+  dayHeaderTitle: { flex: 1, marginRight: spacing.sm },
+  addPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: 6,
+    paddingLeft: 8,
+    paddingRight: 12,
+    borderRadius: 999,
+    backgroundColor: colors.accentSoft,
+  },
+  addPillLabel: { ...typography.body, color: colors.accentStrong, fontWeight: '600' },
   selectedDaySection: {
     marginTop: spacing.lg,
   },
