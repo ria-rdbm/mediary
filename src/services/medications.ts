@@ -123,9 +123,11 @@ export class HasHistoryError extends Error {
 }
 
 export async function deleteMedication(id: string): Promise<void> {
-  const { error } = await supabase.from('medications').delete().eq('id', id);
+  const { data, error } = await supabase.from('medications').delete().eq('id', id).select('id');
   if (error) {
     if (error.code === '23503') throw new HasHistoryError();
     throw error;
   }
+  // RLS filters rows silently, so a no-op delete must not look like success.
+  if (!data?.length) throw new Error('Medication was not deleted');
 }
