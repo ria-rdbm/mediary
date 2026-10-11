@@ -74,3 +74,21 @@ export async function purchaseLifetimeAccess(): Promise<CustomerInfo> {
 export async function restorePurchases(): Promise<CustomerInfo> {
   return Purchases.restorePurchases();
 }
+
+/** Fallback shown until (or unless) the store price can be loaded. */
+export const LIFETIME_FALLBACK_PRICE = 'NZ$16.99';
+
+/** Localised store price for Lifetime Access, or null when unavailable. */
+export async function fetchLifetimePrice(): Promise<string | null> {
+  if (!configured) return null;
+  try {
+    const offerings = await Purchases.getOfferings();
+    const pkg =
+      offerings.current?.lifetime ??
+      offerings.current?.availablePackages.find((p) => p.product.identifier === LIFETIME_PRODUCT_ID);
+    return pkg?.product.priceString ?? null;
+  } catch (err) {
+    console.warn('Failed to fetch Lifetime Access price', err);
+    return null;
+  }
+}

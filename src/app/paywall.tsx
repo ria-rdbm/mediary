@@ -7,6 +7,7 @@ import { PrimaryButton, TextButton } from '@/components/ui/Button';
 import { colors, typography, spacing, radius } from '@/theme';
 import { purchaseLifetimeAccess, restorePurchases, hasLifetimeEntitlement } from '@/lib/revenuecat';
 import { syncEntitlement } from '@/services/account';
+import { useLifetimePrice } from '@/hooks/useLifetimePrice';
 import { useEntitlement } from '@/context/EntitlementProvider';
 
 const BENEFITS = [
@@ -18,6 +19,7 @@ const BENEFITS = [
 
 export default function PaywallScreen() {
   const { refetch } = useEntitlement();
+  const price = useLifetimePrice();
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,8 +90,8 @@ export default function PaywallScreen() {
         </View>
 
         <View style={styles.priceCard}>
-          <Text style={typography.display}>NZ$16.99</Text>
-          <Text style={typography.caption}>One-time purchase · price shown in your local currency on-device</Text>
+          <Text style={typography.display}>{price}</Text>
+          <Text style={typography.caption}>One-time purchase</Text>
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}

@@ -63,6 +63,14 @@ export default function MedicationStockScreen() {
         </Text>
       </Card>
 
+      {medication.lowStockThreshold == null && (
+        <Pressable onPress={() => router.push(`/medication/${id}/edit`)} accessibilityRole="button">
+          <Text style={styles.thresholdHint}>
+            Get a heads-up before you run out — set a low stock threshold in Edit Medication.
+          </Text>
+        </Pressable>
+      )}
+
       <View style={styles.actionsRow}>
         <PrimaryButton
           label="Add Stock"
@@ -198,6 +206,12 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  thresholdHint: {
+    ...typography.caption,
+    color: colors.accentStrong,
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
   batchRow: {
     flexDirection: 'row',

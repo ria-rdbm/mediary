@@ -14,6 +14,7 @@ import { MedicationListItem } from '@/components/composed/MedicationListItem';
 import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
 import { colors, typography, spacing, radius } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
+import { useLifetimePrice } from '@/hooks/useLifetimePrice';
 import { useUpcomingMedicationReminders } from '@/hooks/useReminders';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useEntitlement } from '@/context/EntitlementProvider';
@@ -61,6 +62,7 @@ export default function HomeScreen() {
     const interval = setInterval(() => setNow(Date.now()), 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+  const lifetimePrice = useLifetimePrice();
   const { showTrialCountdown, trialDaysLeft, isReadOnly } = useEntitlement();
 
   // The gradient hero runs edge-to-edge under the status bar, so the bar's
@@ -240,7 +242,7 @@ export default function HomeScreen() {
           <Card style={[styles.trialCard, { backgroundColor: colors.errorSoft }]}>
             <Text style={typography.cardTitle}>Your free trial has ended</Text>
             <Text style={[typography.bodySecondary, { marginTop: 2 }]}>
-              Unlock Mediary for lifetime access — NZ$16.99
+              Unlock Mediary for lifetime access — {lifetimePrice}
             </Text>
             <PrimaryButton label="Unlock Lifetime Access" onPress={() => router.push('/paywall')} style={{ marginTop: spacing.sm }} />
           </Card>
