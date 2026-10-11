@@ -43,6 +43,9 @@ export default function SettingsScreen() {
         Alert.alert('Nothing to export', 'Add some records first.');
         return;
       }
+      // The share promise stays pending while the sheet is open, so stop
+      // showing "Preparing export…" before presenting it.
+      setExporting(false);
       await Share.share({ message: csv, title: 'Mediary history' });
     } catch (err) {
       console.warn('Export failed', err);
