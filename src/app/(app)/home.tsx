@@ -54,7 +54,7 @@ export default function HomeScreen() {
   const { data: reminders } = useUpcomingMedicationReminders();
   const { data: appointments } = useAppointments();
 
-  // Sampled into state (not read via Date.now() during render) so the
+  // Sampled into state each minute (not read via Date.now() during render) so the
   // "days until expiry" math below stays a pure function of state.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -81,12 +81,14 @@ export default function HomeScreen() {
     for (const reminder of reminders ?? []) {
       const medication = medicationById.get(reminder.medicationId);
       if (!medication) continue;
+      const reminderLocal = `${reminder.reminderDate}T${reminder.reminderTime}:00`;
+      const overdue = new Date(reminderLocal).getTime() < now;
       entries.push({
         id: `reminder-${reminder.id}`,
-        icon: 'notifications-outline',
+        icon: overdue ? 'time-outline' : 'notifications-outline',
         title: medication.name,
-        subtitle: `${formatLocalDate(`${reminder.reminderDate}T${reminder.reminderTime}:00`)} · ${formatLocalTime(`${reminder.reminderDate}T${reminder.reminderTime}:00`)}`,
-        tone: 'accent',
+        subtitle: `${overdue ? 'Overdue · ' : ''}${formatLocalDate(reminderLocal)} · ${formatLocalTime(reminderLocal)}`,
+        tone: overdue ? 'warning' : 'accent',
         onPress: () => router.push(`/record/new?medicationId=${medication.id}`),
       });
     }
@@ -108,14 +110,17 @@ export default function HomeScreen() {
     for (const medication of medications ?? []) {
       if (
         medication.status === 'active' &&
-        medication.lowStockThreshold != null &&
-        medication.totalStock <= medication.lowStockThreshold
+        medication.stockUnit != null &&
+        medication.totalStock <= (medication.lowStockThreshold ?? 0)
       ) {
         entries.push({
           id: `low-stock-${medication.id}`,
           icon: 'alert-circle-outline',
           title: medication.name,
-          subtitle: `Low stock — ${medication.totalStock} ${medication.stockUnit} left`,
+          subtitle:
+            medication.totalStock <= 0
+              ? `Out of stock — 0 ${medication.stockUnit} left`
+              : `Low stock — ${medication.totalStock} ${medication.stockUnit} left`,
           tone: 'warning',
           onPress: () => router.push(`/medication/${medication.id}/stock`),
         });
@@ -142,7 +147,7 @@ export default function HomeScreen() {
 
   const visibleUpcoming = showAllUpcoming ? upcoming : upcoming.slice(0, UPCOMING_PREVIEW_COUNT);
   const activeCount = (medications ?? []).filter((m) => m.status === 'active').length;
-  const lowStockCount = upcoming.filter((e) => e.tone === 'warning').length;
+  const attentionCount = upcoming.filter((e) => e.tone === 'warning').length;
   const greeting = greetingForHour(new Date(now).getHours());
 
   const quickActions: QuickAction[] = [
@@ -197,7 +202,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, lowStockCount > 0 && { color: colors.warning }]}>{lowStockCount}</Text>
+            <Text style={[styles.statValue, attentionCount > 0 && { color: colors.warning }]}>{attentionCount}</Text>
             <Text style={styles.statLabel}>Needs attention</Text>
           </View>
         </Card>
