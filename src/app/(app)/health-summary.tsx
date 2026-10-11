@@ -66,7 +66,7 @@ export default function HealthSummarySelectionScreen() {
 
   return (
     <Screen scroll>
-      <Text style={[typography.screenTitle, styles.title]}>Health Summary</Text>
+      <Text style={[typography.screenTitle, styles.title]}>Summary</Text>
       <Text style={[typography.bodySecondary, styles.subtitle]}>
         Choose what to include, then view a clean summary you can show your healthcare professional.
       </Text>
@@ -133,7 +133,7 @@ export default function HealthSummarySelectionScreen() {
       )}
 
       <PrimaryButton
-        label="View Health Summary"
+        label="View Summary"
         onPress={handleView}
         disabled={selectedIds.length === 0 || invalidRange}
         style={styles.viewButton}

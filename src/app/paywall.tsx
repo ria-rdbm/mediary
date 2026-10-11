@@ -13,7 +13,7 @@ import { useEntitlement } from '@/context/EntitlementProvider';
 const BENEFITS = [
   'Unlimited medications & treatments',
   'Stock tracking with batches & reminders',
-  'Full history, calendar & Health Summary',
+  'Full history, calendar & Summary',
   'No ads, no subscription — pay once',
 ];
 
