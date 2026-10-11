@@ -58,7 +58,7 @@ export default function HomeScreen() {
   // "days until expiry" math below stays a pure function of state.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60 * 60 * 1000);
+    const interval = setInterval(() => setNow(Date.now()), 60 * 1000);
     return () => clearInterval(interval);
   }, []);
   const { showTrialCountdown, trialDaysLeft, isReadOnly } = useEntitlement();
