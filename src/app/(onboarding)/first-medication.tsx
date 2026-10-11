@@ -43,7 +43,7 @@ export default function FirstMedicationScreen() {
       setError('Please enter a name and choose a category.');
       return;
     }
-    if (reminderEnabled && combineDateAndTime(reminderDate, reminderTime).getTime() <= Date.now()) {
+    if (reminderEnabled && combineDateAndTime(reminderDate, reminderTime) <= new Date()) {
       setError('Pick a reminder date and time in the future.');
       return;
     }

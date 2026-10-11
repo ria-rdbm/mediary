@@ -52,7 +52,7 @@ export default function MedicationReminderScreen() {
     if (!guard()) return;
     setError(null);
     const combined = combineDateAndTime(date, time);
-    if (combined.getTime() <= Date.now()) {
+    if (combined <= new Date()) {
       setError('Pick a date and time in the future.');
       return;
     }
