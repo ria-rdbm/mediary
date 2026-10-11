@@ -128,6 +128,10 @@ export default function HealthSummarySelectionScreen() {
         <Toggle label="Include weight trend" value={includeWeight} onValueChange={setIncludeWeight} />
       </View>
 
+      {selectedIds.length === 0 && (
+        <Text style={styles.hint}>Choose at least one medication or treatment above.</Text>
+      )}
+
       <PrimaryButton
         label="View Health Summary"
         onPress={handleView}
@@ -198,6 +202,11 @@ const styles = StyleSheet.create({
   },
   toggleRow: {
     marginTop: spacing.md,
+  },
+  hint: {
+    ...typography.caption,
+    marginTop: spacing.lg,
+    textAlign: 'center',
   },
   viewButton: {
     marginTop: spacing.xl,

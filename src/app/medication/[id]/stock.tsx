@@ -25,7 +25,7 @@ export default function MedicationStockScreen() {
 
   const [addVisible, setAddVisible] = useState(false);
   const [adjustVisible, setAdjustVisible] = useState(false);
-  const [showBatches, setShowBatches] = useState(false);
+  const [showBatches, setShowBatches] = useState(true);
 
   if (isLoading || !medication) {
     return (
