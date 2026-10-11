@@ -40,6 +40,7 @@ export default function NewMedicationScreen() {
         category,
         defaultAmount: amount ? Number(amount) : null,
         defaultAmountUnit: unit,
+        defaultAmountUnitCustom: customUnit,
       });
       router.replace(`/medication/${medication.id}`);
     } catch {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
@@ -11,7 +11,7 @@ import { useMedication } from '@/hooks/useMedications';
 import { useRemindersForMedication, useUpsertMedicationReminder, useDeleteMedicationReminder } from '@/hooks/useReminders';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
 import { requestNotificationPermission, scheduleLocalNotification, cancelLocalNotification, combineDateTime } from '@/lib/notifications';
-import { combineDateAndTime, defaultRecordTime, todayDateKey } from '@/lib/dateTime';
+import { combineDateAndTime, defaultRecordTime, parseDateKey, todayDateKey } from '@/lib/dateTime';
 
 export default function MedicationReminderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,6 +26,18 @@ export default function MedicationReminderScreen() {
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(defaultRecordTime());
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const prefilled = useRef(false);
+
+  useEffect(() => {
+    if (prefilled.current || !existing) return;
+    prefilled.current = true;
+    const [h, m] = existing.reminderTime.split(':').map(Number);
+    const t = new Date();
+    t.setHours(h || 0, m || 0, 0, 0);
+    setDate(parseDateKey(existing.reminderDate));
+    setTime(t);
+  }, [existing]);
 
   if (isLoading || !medication) {
     return (
@@ -38,15 +50,16 @@ export default function MedicationReminderScreen() {
 
   const handleSave = async () => {
     if (!guard()) return;
+    setError(null);
+    const combined = combineDateAndTime(date, time);
+    if (combined.getTime() <= Date.now()) {
+      setError('Pick a date and time in the future.');
+      return;
+    }
     setSaving(true);
     try {
-      const combined = combineDateAndTime(date, time);
       const dateKey = `${combined.getFullYear()}-${String(combined.getMonth() + 1).padStart(2, '0')}-${String(combined.getDate()).padStart(2, '0')}`;
       const timeStr = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
-
-      if (existing?.notificationId) {
-        await cancelLocalNotification(existing.notificationId);
-      }
 
       let notificationId: string | null = null;
       const granted = await requestNotificationPermission();
@@ -60,7 +73,15 @@ export default function MedicationReminderScreen() {
       }
 
       await upsertReminder.mutateAsync({ reminderDate: dateKey, reminderTime: timeStr, notificationId });
+
+      // Only after the new reminder is saved: drop the previous one.
+      if (existing) {
+        if (existing.notificationId) await cancelLocalNotification(existing.notificationId);
+        if (existing.reminderDate !== dateKey) await deleteReminder.mutateAsync(existing.id);
+      }
       router.back();
+    } catch {
+      setError('Could not save the reminder. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -83,6 +104,7 @@ export default function MedicationReminderScreen() {
       <DatePickerField label="Date" value={date} onChange={setDate} />
       <TimePickerField label="Time" value={time} onChange={setTime} />
 
+      {error && <Text style={[typography.bodySecondary, styles.error]}>{error}</Text>}
       <PrimaryButton label={existing ? 'Update Reminder' : 'Set Reminder'} onPress={handleSave} loading={saving} style={styles.saveButton} />
       {existing && <TextButton label="Remove reminder" tone="destructive" onPress={handleRemove} />}
     </Screen>
@@ -91,5 +113,6 @@ export default function MedicationReminderScreen() {
 
 const styles = StyleSheet.create({
   subtitle: { marginBottom: spacing.md, color: colors.textSecondary },
+  error: { color: colors.error, marginTop: spacing.sm },
   saveButton: { marginTop: spacing.sm, marginBottom: spacing.xs },
 });

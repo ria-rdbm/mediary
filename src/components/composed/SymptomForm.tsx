@@ -56,7 +56,7 @@ export function SymptomForm({
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      await onSubmit(values);
+      await onSubmit({ ...values, endAt: values.isOngoing ? null : (values.endAt ?? values.startAt) });
     } finally {
       setSaving(false);
     }

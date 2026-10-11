@@ -65,7 +65,11 @@ export function RecordForm({ medications, initial, submitLabel, onSubmit, onSubm
     const next = medications.find((m) => m.id === id);
     update('medicationId', id);
     if (next) {
-      update('amountUnit', next.lastAmountUnit ?? next.defaultAmountUnit ?? values.amountUnit);
+      const nextUnit = next.lastAmountUnit ?? next.defaultAmountUnit ?? values.amountUnit;
+      update('amountUnit', nextUnit);
+      if (nextUnit === 'Other') {
+        update('amountUnitCustom', (next.lastAmountUnit ? next.lastAmountUnitCustom : next.defaultAmountUnitCustom) ?? values.amountUnitCustom);
+      }
       if (next.defaultAmount != null && !values.amount) {
         update('amount', String(next.defaultAmount));
       }

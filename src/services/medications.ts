@@ -42,6 +42,7 @@ export interface CreateMedicationInput {
   category: MedicationCategory;
   defaultAmount?: number | null;
   defaultAmountUnit?: DoseUnit | null;
+  defaultAmountUnitCustom?: string | null;
   reminderDate?: string | null;
   reminderTime?: string | null;
 }
@@ -55,6 +56,7 @@ export async function createMedication(userId: string, input: CreateMedicationIn
       category: input.category,
       default_amount: input.defaultAmount ?? null,
       default_amount_unit: input.defaultAmountUnit ?? null,
+      default_amount_unit_custom: input.defaultAmountUnit === 'Other' ? input.defaultAmountUnitCustom?.trim() || null : null,
     })
     .select()
     .single();
@@ -68,6 +70,7 @@ export interface UpdateMedicationInput {
   defaultProviderId?: string | null;
   defaultAmount?: number | null;
   defaultAmountUnit?: DoseUnit | null;
+  defaultAmountUnitCustom?: string | null;
   autoDeductStock?: boolean;
   stockUsedPerInjection?: number | null;
   lowStockThreshold?: number | null;
@@ -80,6 +83,7 @@ export async function updateMedication(id: string, input: UpdateMedicationInput)
   if (input.defaultProviderId !== undefined) patch.default_provider_id = input.defaultProviderId;
   if (input.defaultAmount !== undefined) patch.default_amount = input.defaultAmount;
   if (input.defaultAmountUnit !== undefined) patch.default_amount_unit = input.defaultAmountUnit;
+  if (input.defaultAmountUnitCustom !== undefined) patch.default_amount_unit_custom = input.defaultAmountUnitCustom;
   if (input.autoDeductStock !== undefined) patch.auto_deduct_stock = input.autoDeductStock;
   if (input.stockUsedPerInjection !== undefined) patch.stock_used_per_injection = input.stockUsedPerInjection;
   if (input.lowStockThreshold !== undefined) patch.low_stock_threshold = input.lowStockThreshold;

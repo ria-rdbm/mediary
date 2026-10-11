@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { localDateKey } from '@/lib/dateTime';
+import { captureLocalDateTime, localDateKey } from '@/lib/dateTime';
 import { SEVERITY_LABELS } from '@/constants/symptoms';
 import { CATEGORY_LABELS } from '@/constants/categories';
 import type { HistoryItem, HistoryRecordType } from '@/types/domain';
@@ -135,7 +135,8 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
     const { data, error } = await query;
     if (error) throw error;
     for (const t of data ?? []) {
-      const localKey = localDateKey(t.created_at);
+      const occurredLocal = captureLocalDateTime(new Date(t.created_at)).local;
+      const localKey = localDateKey(occurredLocal);
       if (filter.startDateKey && localKey < filter.startDateKey) continue;
       if (filter.endDateKey && localKey > filter.endDateKey) continue;
       const med = medications.get(t.medication_id);
@@ -150,7 +151,7 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
       items.push({
         id: t.id,
         type: 'stock',
-        occurredLocal: t.created_at,
+        occurredLocal,
         medicationId: t.medication_id,
         title: `${med?.name ?? 'Medication'} — ${label}`,
         subtitle: `${t.quantity > 0 ? '+' : ''}${t.quantity} ${t.stock_unit}`,

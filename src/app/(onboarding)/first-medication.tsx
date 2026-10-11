@@ -43,6 +43,10 @@ export default function FirstMedicationScreen() {
       setError('Please enter a name and choose a category.');
       return;
     }
+    if (reminderEnabled && combineDateAndTime(reminderDate, reminderTime).getTime() <= Date.now()) {
+      setError('Pick a reminder date and time in the future.');
+      return;
+    }
     setError(null);
     setSaving(true);
     try {
@@ -51,6 +55,7 @@ export default function FirstMedicationScreen() {
         category,
         defaultAmount: amount ? Number(amount) : null,
         defaultAmountUnit: unit,
+        defaultAmountUnitCustom: customUnit,
       });
 
       if (reminderEnabled) {
