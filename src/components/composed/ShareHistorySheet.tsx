@@ -48,9 +48,12 @@ export function ShareHistorySheet({ visible, onClose }: { visible: boolean; onCl
         Alert.alert('Nothing to share', 'There are no records in this period.');
         return;
       }
-      // Close first: the share promise stays pending while its sheet is open,
-      // and iOS can't stack it on top of this modal.
+      // Close first and let the modal finish dismissing: iOS can't present
+      // the share sheet on top of (or while dismissing) another modal, and the
+      // share promise stays pending while its sheet is open.
       onClose();
+      setBusy(false);
+      await new Promise((resolve) => setTimeout(resolve, 600));
       await Share.share({ message: text });
     } catch (err) {
       console.warn('Share failed', err);
