@@ -39,7 +39,12 @@ function EditBatchForm({
       <Text style={typography.sectionTitle}>
         Batch · {batch.quantity} {batch.stockUnit}
       </Text>
-      <DatePickerField label="Expiry date (optional)" value={expiryDate ?? new Date()} onChange={setExpiryDate} />
+      <DatePickerField
+            label="Expiry date (optional)"
+            value={expiryDate ?? new Date()}
+            onChange={setExpiryDate}
+            placeholder={expiryDate ? undefined : 'Not set'}
+          />
       {expiryDate && <TextButton label="Clear expiry date" onPress={() => setExpiryDate(null)} />}
       <Input
         label="Batch / Lot number (optional)"

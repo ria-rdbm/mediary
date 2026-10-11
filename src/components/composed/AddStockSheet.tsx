@@ -94,7 +94,12 @@ export function AddStockSheet({ visible, onClose, lockedUnit, onSubmit, submitti
 
       {showDetails && (
         <View style={styles.details}>
-          <DatePickerField label="Expiry date (optional)" value={expiryDate ?? new Date()} onChange={setExpiryDate} />
+          <DatePickerField
+            label="Expiry date (optional)"
+            value={expiryDate ?? new Date()}
+            onChange={setExpiryDate}
+            placeholder={expiryDate ? undefined : 'Not set'}
+          />
           <Input
             label="Batch / Lot number (optional)"
             placeholder="Found on the medication packaging"

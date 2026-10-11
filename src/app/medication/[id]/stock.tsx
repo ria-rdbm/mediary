@@ -28,7 +28,7 @@ import { formatLocalDate } from '@/lib/dateTime';
 export default function MedicationStockScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: medication, isLoading } = useMedication(id);
-  const { data: batches } = useStockBatches(id);
+  const { data: batches, isLoading: batchesLoading } = useStockBatches(id);
   const addBatch = useAddStockBatch(id);
   const manualAdjust = useManualStockAdjustment(id);
   const { guard } = useWriteGuard();
@@ -93,6 +93,8 @@ export default function MedicationStockScreen() {
           <Text style={typography.bodySecondary}>
             {activeBatches.length} active batch{activeBatches.length === 1 ? '' : 'es'}
           </Text>
+        ) : batchesLoading ? (
+          <LoadingState />
         ) : activeBatches.length === 0 ? (
           <EmptyState icon="cube-outline" title="No stock yet" message="Add stock to get started." />
         ) : (
