@@ -3,6 +3,7 @@ import { captureLocalDateTime, localDateKey } from '@/lib/dateTime';
 import { SEVERITY_LABELS } from '@/constants/symptoms';
 import { CATEGORY_LABELS } from '@/constants/categories';
 import type { HistoryItem, HistoryRecordType } from '@/types/domain';
+import { formatAmount } from '@/lib/formatAmount';
 
 export interface HistoryFilter {
   startDateKey?: string;
@@ -51,7 +52,7 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
         medicationId: r.medication_id,
         title: med?.name ?? 'Medication',
         subtitle: r.taken
-          ? [r.amount ? `${r.amount} ${r.amount_unit}` : null, r.site ?? r.treatment_area].filter(Boolean).join(' · ') || 'Taken'
+          ? [formatAmount(r.amount, r.amount_unit, r.amount_unit_custom), r.site ?? r.treatment_area].filter(Boolean).join(' · ') || 'Taken'
           : 'Not recorded',
       });
     }

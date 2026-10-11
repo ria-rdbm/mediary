@@ -10,6 +10,7 @@ import { useHealthSummary } from '@/hooks/useHealthSummary';
 import { formatLocalDate, formatLocalTime } from '@/lib/dateTime';
 import { STATUS_LABELS } from '@/constants/categories';
 import type { HealthSummarySection } from '@/services/healthSummary';
+import { formatAmount } from '@/lib/formatAmount';
 
 function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -44,7 +45,7 @@ function MedicationSection({ section }: { section: HealthSummarySection }) {
               </Text>
               <Text style={typography.body}>
                 {record.taken
-                  ? [record.amount ? `${record.amount} ${record.amountUnit}` : null, record.site ?? record.treatmentArea]
+                  ? [formatAmount(record.amount, record.amountUnit, record.amountUnitCustom), record.site ?? record.treatmentArea]
                       .filter(Boolean)
                       .join(' · ') || 'Taken'
                   : 'Not recorded'}

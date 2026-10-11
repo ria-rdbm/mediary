@@ -20,6 +20,7 @@ import { useTreatmentRecordsForMedication } from '@/hooks/useTreatmentRecords';
 import { useRemindersForMedication } from '@/hooks/useReminders';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
 import { formatLocalDate, formatLocalTime, todayDateKey } from '@/lib/dateTime';
+import { formatAmount } from '@/lib/formatAmount';
 
 export default function MedicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -122,7 +123,7 @@ export default function MedicationDetailScreen() {
               </Text>
               <Text style={typography.caption}>
                 {record.taken
-                  ? [record.amount ? `${record.amount} ${record.amountUnit}` : null, record.site].filter(Boolean).join(' · ') || 'Taken'
+                  ? [formatAmount(record.amount, record.amountUnit, record.amountUnitCustom), record.site].filter(Boolean).join(' · ') || 'Taken'
                   : 'Not recorded'}
               </Text>
             </Pressable>
