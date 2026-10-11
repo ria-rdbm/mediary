@@ -1,6 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 
-const BUNDLE_ID = 'com.mediary.app';
+const BUNDLE_ID = 'nz.co.artifactai.mediary';
 
 const config: ExpoConfig = {
   name: 'Mediary',
