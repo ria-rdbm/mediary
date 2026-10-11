@@ -70,11 +70,9 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
   },
-  extra: {
-    eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? 'REPLACE_WITH_EAS_PROJECT_ID',
-    },
-  },
+  // Left out until `eas init` provides a real project ID: a placeholder here
+  // makes EAS CLI fail with "Invalid UUID appId".
+  extra: process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : {},
 };
 
 export default config;
