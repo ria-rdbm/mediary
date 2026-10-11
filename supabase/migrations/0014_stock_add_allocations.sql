@@ -145,7 +145,7 @@ join lateral (
     and sb.user_id = t.user_id
     and sb.initial_quantity = t.quantity
     and abs(extract(epoch from (sb.created_at - t.created_at))) < 2
-    and not exists (select 1 from public.stock_transaction_allocations a where a.stock_batch_id = sb.id)
+    and not exists (select 1 from public.stock_transaction_allocations a where a.stock_batch_id = sb.id and a.quantity > 0)
   order by abs(extract(epoch from (sb.created_at - t.created_at)))
   limit 1
 ) b on true
