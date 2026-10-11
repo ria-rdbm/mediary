@@ -82,6 +82,7 @@ export default function MedicationDetailScreen() {
           <Text style={typography.caption}>{CATEGORY_LABELS[medication.category]}</Text>
           <Pressable onPress={() => setStatusSheetVisible(true)} style={styles.statusPress}>
             <StatusBadge status={medication.status} />
+            <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
           </Pressable>
         </View>
       </View>
@@ -196,6 +197,9 @@ const styles = StyleSheet.create({
   },
   statusPress: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   linkRow: {
     flexDirection: 'row',
