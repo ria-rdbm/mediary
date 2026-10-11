@@ -43,6 +43,8 @@ export interface CreateMedicationInput {
   defaultAmount?: number | null;
   defaultAmountUnit?: DoseUnit | null;
   defaultAmountUnitCustom?: string | null;
+  color?: string | null;
+  defaultProviderId?: string | null;
   reminderDate?: string | null;
   reminderTime?: string | null;
 }
@@ -54,6 +56,8 @@ export async function createMedication(userId: string, input: CreateMedicationIn
       user_id: userId,
       name: input.name.trim(),
       category: input.category,
+      color: input.color ?? null,
+      default_provider_id: input.defaultProviderId ?? null,
       default_amount: input.defaultAmount ?? null,
       default_amount_unit: input.defaultAmountUnit ?? null,
       default_amount_unit_custom: input.defaultAmountUnit === 'Other' ? input.defaultAmountUnitCustom?.trim() || null : null,
