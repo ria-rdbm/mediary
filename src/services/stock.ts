@@ -80,3 +80,20 @@ export async function setBatchExpiryNotificationId(batchId: string, notification
     .eq('id', batchId);
   if (error) throw error;
 }
+
+export async function updateBatchDetails(
+  batchId: string,
+  details: { expiryDate: string | null; batchNumber: string | null; barcode: string | null },
+): Promise<void> {
+  const { error } = await supabase
+    .from('stock_batches')
+    .update({ expiry_date: details.expiryDate, batch_number: details.batchNumber, barcode: details.barcode })
+    .eq('id', batchId);
+  if (error) throw error;
+}
+
+export async function discardStockBatch(batchId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('discard_stock_batch', { p_batch_id: batchId });
+  if (error) throw error;
+  return data;
+}

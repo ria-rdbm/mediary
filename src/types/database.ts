@@ -263,7 +263,17 @@ export type Database = {
       stock_batches: TableDef<
         StockBatchRow,
         never,
-        Partial<Pick<StockBatchRow, 'expiry_reminder_enabled' | 'expiry_reminder_days_before' | 'expiry_reminder_notification_id'>>
+        Partial<
+          Pick<
+            StockBatchRow,
+            | 'expiry_date'
+            | 'batch_number'
+            | 'barcode'
+            | 'expiry_reminder_enabled'
+            | 'expiry_reminder_days_before'
+            | 'expiry_reminder_notification_id'
+          >
+        >
       >;
       stock_transactions: TableDef<StockTransactionRow, never, never>; // written via RPCs only
       stock_transaction_allocations: TableDef<StockTransactionAllocationRow, never, never>;
@@ -378,6 +388,7 @@ export type Database = {
         Returns: { diff: number };
       };
       delete_stock_transaction: { Args: { p_transaction_id: string }; Returns: void };
+      discard_stock_batch: { Args: { p_batch_id: string }; Returns: number };
     };
   };
 };

@@ -153,7 +153,7 @@ export default function MedicationDetailScreen() {
         <PrimaryButton
           label="Mark Finished"
           onPress={async () => {
-            await setStatus.mutateAsync({ status: 'finished', finishedAt: finishedAt.toISOString().slice(0, 10) });
+            await setStatus.mutateAsync({ status: 'finished', finishedAt: todayDateKey(finishedAt) });
             setConfirmingFinish(false);
             setStatusSheetVisible(false);
           }}

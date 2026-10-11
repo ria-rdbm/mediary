@@ -49,3 +49,20 @@ export function useDeleteStockTransaction(medicationId: string) {
     onSuccess: () => invalidateStock(queryClient, medicationId),
   });
 }
+
+export function useUpdateBatchDetails(medicationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ batchId, ...details }: { batchId: string; expiryDate: string | null; batchNumber: string | null; barcode: string | null }) =>
+      stockService.updateBatchDetails(batchId, details),
+    onSuccess: () => invalidateStock(queryClient, medicationId),
+  });
+}
+
+export function useDiscardStockBatch(medicationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (batchId: string) => stockService.discardStockBatch(batchId),
+    onSuccess: () => invalidateStock(queryClient, medicationId),
+  });
+}

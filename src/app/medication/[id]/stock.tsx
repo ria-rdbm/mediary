@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
@@ -11,7 +12,16 @@ import { AddStockSheet } from '@/components/composed/AddStockSheet';
 import { ManualAdjustmentSheet } from '@/components/composed/ManualAdjustmentSheet';
 import { colors, typography, spacing } from '@/theme';
 import { useMedication } from '@/hooks/useMedications';
-import { useStockBatches, useAddStockBatch, useManualStockAdjustment } from '@/hooks/useStock';
+import {
+  useStockBatches,
+  useAddStockBatch,
+  useManualStockAdjustment,
+  useUpdateBatchDetails,
+  useDiscardStockBatch,
+} from '@/hooks/useStock';
+import { EditBatchSheet } from '@/components/composed/EditBatchSheet';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
+import type { StockBatch } from '@/types/domain';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
 import { formatLocalDate } from '@/lib/dateTime';
 
@@ -26,6 +36,10 @@ export default function MedicationStockScreen() {
   const [addVisible, setAddVisible] = useState(false);
   const [adjustVisible, setAdjustVisible] = useState(false);
   const [showBatches, setShowBatches] = useState(true);
+  const [editingBatch, setEditingBatch] = useState<StockBatch | null>(null);
+  const [discardTarget, setDiscardTarget] = useState<StockBatch | null>(null);
+  const updateBatch = useUpdateBatchDetails(id);
+  const discardBatch = useDiscardStockBatch(id);
 
   if (isLoading || !medication) {
     return (
@@ -75,7 +89,14 @@ export default function MedicationStockScreen() {
           <EmptyState icon="cube-outline" title="No stock yet" message="Add stock to get started." />
         ) : (
           activeBatches.map((batch) => (
-            <View key={batch.id} style={styles.batchRow}>
+            <Pressable
+              key={batch.id}
+              accessibilityRole="button"
+              onPress={() => {
+                if (guard()) setEditingBatch(batch);
+              }}
+              style={styles.batchRow}
+            >
               <View>
                 <Text style={typography.body}>
                   {batch.quantity} {batch.stockUnit}
@@ -89,10 +110,50 @@ export default function MedicationStockScreen() {
                     .join(' · ') || 'No expiry or lot recorded'}
                 </Text>
               </View>
-            </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
           ))
         )}
       </Section>
+
+      <EditBatchSheet
+        batch={editingBatch}
+        onClose={() => setEditingBatch(null)}
+        saving={updateBatch.isPending}
+        onSave={async (details) => {
+          if (!editingBatch) return;
+          try {
+            await updateBatch.mutateAsync({ batchId: editingBatch.id, ...details });
+            setEditingBatch(null);
+          } catch {
+            Alert.alert('Could not save', 'Please try again.');
+          }
+        }}
+        onDiscard={() => {
+          // Close the edit sheet first: iOS can't stack two modals reliably.
+          setDiscardTarget(editingBatch);
+          setEditingBatch(null);
+        }}
+      />
+
+      <ConfirmationDialog
+        visible={!!discardTarget}
+        title="Discard this batch?"
+        message="The remaining stock in this batch is removed. You can undo it by deleting the entry in stock history."
+        confirmLabel="Discard"
+        destructive
+        onCancel={() => setDiscardTarget(null)}
+        onConfirm={async () => {
+          const target = discardTarget;
+          setDiscardTarget(null);
+          if (!target) return;
+          try {
+            await discardBatch.mutateAsync(target.id);
+          } catch (err: unknown) {
+            Alert.alert('Could not discard', (err as Error)?.message ?? 'Please try again.');
+          }
+        }}
+      />
 
       <TextButton label="View stock history" onPress={() => router.push(`/medication/${id}/stock-history`)} />
 
@@ -139,6 +200,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   batchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
