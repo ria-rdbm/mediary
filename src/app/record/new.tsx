@@ -28,7 +28,10 @@ export default function NewRecordScreen() {
       <Header title="Log Treatment" />
       <RecordForm
         medications={medications}
-        initial={defaultRecordFormValues(medicationId)}
+        initial={defaultRecordFormValues(
+          medicationId,
+          medications.find((m) => m.id === medicationId),
+        )}
         submitLabel="Save"
         onSubmit={async (values) => {
           if (!guard()) throw new Error('read-only');

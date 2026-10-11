@@ -214,14 +214,22 @@ export function RecordForm({ medications, initial, submitLabel, onSubmit, onSubm
   );
 }
 
-export function defaultRecordFormValues(medicationId = ''): RecordFormValues {
+export function defaultRecordFormValues(
+  medicationId = '',
+  medication?: Pick<MedicationWithStock,'defaultAmount' | 'defaultAmountUnit' | 'defaultAmountUnitCustom' | 'lastAmountUnit' | 'lastAmountUnitCustom'>,
+): RecordFormValues {
+  const unit = medication?.lastAmountUnit ?? medication?.defaultAmountUnit ?? null;
+  const unitCustom =
+    unit === 'Other'
+      ? ((medication?.lastAmountUnit ? medication.lastAmountUnitCustom : medication?.defaultAmountUnitCustom) ?? '')
+      : '';
   return {
     medicationId,
     taken: true,
     occurredAt: combineDateAndTime(new Date(), defaultRecordTime()),
-    amount: '',
-    amountUnit: null,
-    amountUnitCustom: '',
+    amount: medication?.defaultAmount != null ? String(medication.defaultAmount) : '',
+    amountUnit: unit,
+    amountUnitCustom: unitCustom,
     site: null,
     siteCustom: '',
     treatmentArea: '',
