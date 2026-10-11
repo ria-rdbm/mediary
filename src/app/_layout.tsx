@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { queryClient } from '@/lib/queryClient';
-import { AuthProvider } from '@/context/AuthProvider';
+import { AuthProvider, useAuth } from '@/context/AuthProvider';
 import { EntitlementProvider } from '@/context/EntitlementProvider';
 import { addNotificationResponseListener, getLastNotificationRoute, type NotificationRoute } from '@/lib/notifications';
 
@@ -43,10 +43,15 @@ function useNotificationRouting() {
 
 function RootNavigator() {
   useNotificationRouting();
+  const { status } = useAuth();
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
+      {/* Once signed in, (auth) becomes inaccessible and the router moves the
+          user to index, which routes on to onboarding or home. */}
+      <Stack.Protected guard={status !== 'signed_in'}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
       <Stack.Screen name="(onboarding)" />
       <Stack.Screen name="(app)" />
       <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
