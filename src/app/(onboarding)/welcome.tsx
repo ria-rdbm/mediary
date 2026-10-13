@@ -12,7 +12,7 @@ export default function WelcomeScreen() {
 
   const handleContinue = async () => {
     await acknowledge.mutateAsync();
-    router.push('/(onboarding)/categories');
+    router.push('/(onboarding)/profile');
   };
 
   return (
