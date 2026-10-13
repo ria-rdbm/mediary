@@ -11,10 +11,7 @@ export default function OnboardingProfileScreen() {
 
   return (
     <Screen scroll>
-      <Text style={[typography.screenTitle, styles.title]}>Tell us about you</Text>
-      <Text style={[typography.bodySecondary, styles.subtitle]}>
-        This helps keep your records accurate. You can edit this later from Settings.
-      </Text>
+      <Text style={[typography.screenTitle, styles.title]}>Profile</Text>
 
       <ProfileDetailsForm
         submitLabel="Continue"
@@ -29,6 +26,5 @@ export default function OnboardingProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { marginTop: spacing.lg },
-  subtitle: { marginTop: spacing.xxs, marginBottom: spacing.lg },
+  title: { marginTop: spacing.lg, marginBottom: spacing.lg },
 });
