@@ -19,6 +19,7 @@ export default function SignInScreen() {
     setLoading('apple');
     try {
       await signInWithApple();
+      router.replace('/');
     } catch (err: unknown) {
       if ((err as { code?: string })?.code !== 'ERR_REQUEST_CANCELED') {
         setError('Sign in with Apple failed. Please try again.');
@@ -33,6 +34,7 @@ export default function SignInScreen() {
     setLoading('google');
     try {
       await signInWithGoogle();
+      router.replace('/');
     } catch (err) {
       if (!isGoogleSignInCancelled(err)) {
         setError('Sign in with Google failed. Please try again.');
@@ -61,7 +63,10 @@ export default function SignInScreen() {
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
       });
-      if (!signInError && signInData.session) return;
+      if (!signInError && signInData.session) {
+        router.replace('/');
+        return;
+      }
 
       const { error: signUpError } = await supabase.auth.signUp({
         email: DEV_EMAIL,
