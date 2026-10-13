@@ -42,6 +42,9 @@ export interface CreateMedicationInput {
   category: MedicationCategory;
   defaultAmount?: number | null;
   defaultAmountUnit?: DoseUnit | null;
+  defaultAmountUnitCustom?: string | null;
+  color?: string | null;
+  defaultProviderId?: string | null;
   reminderDate?: string | null;
   reminderTime?: string | null;
 }
@@ -53,8 +56,11 @@ export async function createMedication(userId: string, input: CreateMedicationIn
       user_id: userId,
       name: input.name.trim(),
       category: input.category,
+      color: input.color ?? null,
+      default_provider_id: input.defaultProviderId ?? null,
       default_amount: input.defaultAmount ?? null,
       default_amount_unit: input.defaultAmountUnit ?? null,
+      default_amount_unit_custom: input.defaultAmountUnit === 'Other' ? input.defaultAmountUnitCustom?.trim() || null : null,
     })
     .select()
     .single();
@@ -68,6 +74,7 @@ export interface UpdateMedicationInput {
   defaultProviderId?: string | null;
   defaultAmount?: number | null;
   defaultAmountUnit?: DoseUnit | null;
+  defaultAmountUnitCustom?: string | null;
   autoDeductStock?: boolean;
   stockUsedPerInjection?: number | null;
   lowStockThreshold?: number | null;
@@ -80,6 +87,7 @@ export async function updateMedication(id: string, input: UpdateMedicationInput)
   if (input.defaultProviderId !== undefined) patch.default_provider_id = input.defaultProviderId;
   if (input.defaultAmount !== undefined) patch.default_amount = input.defaultAmount;
   if (input.defaultAmountUnit !== undefined) patch.default_amount_unit = input.defaultAmountUnit;
+  if (input.defaultAmountUnitCustom !== undefined) patch.default_amount_unit_custom = input.defaultAmountUnitCustom;
   if (input.autoDeductStock !== undefined) patch.auto_deduct_stock = input.autoDeductStock;
   if (input.stockUsedPerInjection !== undefined) patch.stock_used_per_injection = input.stockUsedPerInjection;
   if (input.lowStockThreshold !== undefined) patch.low_stock_threshold = input.lowStockThreshold;
@@ -102,4 +110,24 @@ export async function setMedicationStatus(
     .single();
   if (error) throw error;
   return mapMedication(data);
+}
+
+/**
+ * Deletes a medication that has no treatment records or stock history. The
+ * database restricts deletion otherwise, which surfaces as `HasHistoryError`.
+ */
+export class HasHistoryError extends Error {
+  constructor() {
+    super('Medication has records or stock history');
+  }
+}
+
+export async function deleteMedication(id: string): Promise<void> {
+  const { data, error } = await supabase.from('medications').delete().eq('id', id).select('id');
+  if (error) {
+    if (error.code === '23503') throw new HasHistoryError();
+    throw error;
+  }
+  // RLS filters rows silently, so a no-op delete must not look like success.
+  if (!data?.length) throw new Error('Medication was not deleted');
 }

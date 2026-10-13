@@ -8,6 +8,7 @@ import { DatePickerField } from '@/components/ui/DateTimeFields';
 import { PrimaryButton, TextButton } from '@/components/ui/Button';
 import { BarcodeScannerModal } from '@/components/composed/BarcodeScannerModal';
 import { colors, typography, spacing } from '@/theme';
+import { todayDateKey } from '@/lib/dateTime';
 import { STOCK_UNITS } from '@/constants/units';
 import type { StockUnit } from '@/constants/units';
 
@@ -49,7 +50,7 @@ export function AddStockSheet({ visible, onClose, lockedUnit, onSubmit, submitti
     await onSubmit({
       quantity: Number(quantity),
       stockUnit: effectiveUnit,
-      expiryDate: expiryDate ? expiryDate.toISOString().slice(0, 10) : null,
+      expiryDate: expiryDate ? todayDateKey(expiryDate) : null,
       batchNumber: batchNumber || null,
       barcode: barcode || null,
     });
@@ -93,7 +94,12 @@ export function AddStockSheet({ visible, onClose, lockedUnit, onSubmit, submitti
 
       {showDetails && (
         <View style={styles.details}>
-          <DatePickerField label="Expiry date (optional)" value={expiryDate ?? new Date()} onChange={setExpiryDate} />
+          <DatePickerField
+            label="Expiry date (optional)"
+            value={expiryDate ?? new Date()}
+            onChange={setExpiryDate}
+            placeholder={expiryDate ? undefined : 'Not set'}
+          />
           <Input
             label="Batch / Lot number (optional)"
             placeholder="Found on the medication packaging"

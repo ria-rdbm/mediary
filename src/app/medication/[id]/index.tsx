@@ -20,6 +20,7 @@ import { useTreatmentRecordsForMedication } from '@/hooks/useTreatmentRecords';
 import { useRemindersForMedication } from '@/hooks/useReminders';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
 import { formatLocalDate, formatLocalTime, todayDateKey } from '@/lib/dateTime';
+import { formatAmount } from '@/lib/formatAmount';
 
 export default function MedicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -90,6 +91,7 @@ export default function MedicationDetailScreen() {
           <Text style={typography.caption}>{CATEGORY_LABELS[medication.category]}</Text>
           <Pressable onPress={() => setStatusSheetVisible(true)} style={styles.statusPress}>
             <StatusBadge status={medication.status} />
+            <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
           </Pressable>
         </View>
       </View>
@@ -131,7 +133,7 @@ export default function MedicationDetailScreen() {
               </Text>
               <Text style={typography.caption}>
                 {record.taken
-                  ? [record.amount ? `${record.amount} ${record.amountUnit}` : null, record.site].filter(Boolean).join(' · ') || 'Taken'
+                  ? [formatAmount(record.amount, record.amountUnit, record.amountUnitCustom), record.site].filter(Boolean).join(' · ') || 'Taken'
                   : 'Not recorded'}
               </Text>
             </Pressable>
@@ -160,7 +162,7 @@ export default function MedicationDetailScreen() {
         <PrimaryButton
           label="Mark Finished"
           onPress={async () => {
-            await setStatus.mutateAsync({ status: 'finished', finishedAt: finishedAt.toISOString().slice(0, 10) });
+            await setStatus.mutateAsync({ status: 'finished', finishedAt: todayDateKey(finishedAt) });
             setConfirmingFinish(false);
             setStatusSheetVisible(false);
           }}
@@ -204,6 +206,9 @@ const styles = StyleSheet.create({
   },
   statusPress: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   linkRow: {
     flexDirection: 'row',

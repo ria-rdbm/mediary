@@ -8,6 +8,8 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 interface QuickAddSheetProps {
   visible: boolean;
   onClose: () => void;
+  /** Pre-fills the new entry's date (yyyy-MM-dd), e.g. when adding from a calendar day. */
+  dateKey?: string | null;
 }
 
 const ACTIONS: { icon: keyof typeof Ionicons.glyphMap; label: string; route: string }[] = [
@@ -18,7 +20,7 @@ const ACTIONS: { icon: keyof typeof Ionicons.glyphMap; label: string; route: str
   { icon: 'calendar-outline', label: 'Add appointment', route: '/appointment/new' },
 ];
 
-export function QuickAddSheet({ visible, onClose }: QuickAddSheetProps) {
+export function QuickAddSheet({ visible, onClose, dateKey }: QuickAddSheetProps) {
   return (
     <BottomSheet visible={visible} onClose={onClose}>
       <Text style={[typography.sectionTitle, styles.title]}>Add</Text>
@@ -28,7 +30,7 @@ export function QuickAddSheet({ visible, onClose }: QuickAddSheetProps) {
           style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}
           onPress={() => {
             onClose();
-            router.push(action.route as never);
+            router.push((dateKey ? { pathname: action.route, params: { date: dateKey } } : action.route) as never);
           }}
         >
           <View style={styles.iconCircle}>

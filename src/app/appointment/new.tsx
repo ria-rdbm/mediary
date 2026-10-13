@@ -9,9 +9,10 @@ import { useProviders } from '@/hooks/useProviders';
 import { useCreateAppointment } from '@/hooks/useAppointments';
 import { touchProviderLastUsed } from '@/services/providers';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
+import { initialDateTimeForDateKey } from '@/lib/dateTime';
 
 export default function NewAppointmentScreen() {
-  const { medicationId } = useLocalSearchParams<{ medicationId?: string }>();
+  const { medicationId, date } = useLocalSearchParams<{ medicationId?: string; date?: string }>();
   const { data: medications, isLoading: medicationsLoading } = useMedications();
   const { data: providers, isLoading: providersLoading } = useProviders();
   const createAppointment = useCreateAppointment();
@@ -32,7 +33,7 @@ export default function NewAppointmentScreen() {
       <AppointmentCoreForm
         medications={medications}
         providers={providers}
-        initial={defaultAppointmentFormValues(medicationId ?? null)}
+        initial={defaultAppointmentFormValues(medicationId ?? null, initialDateTimeForDateKey(date, true))}
         submitLabel="Save"
         onSubmit={async (values) => {
           if (!guard()) return;

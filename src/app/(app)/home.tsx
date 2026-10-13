@@ -14,6 +14,7 @@ import { MedicationListItem } from '@/components/composed/MedicationListItem';
 import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
 import { colors, typography, spacing, radius } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
+import { useLifetimePrice } from '@/hooks/useLifetimePrice';
 import { useUpcomingMedicationReminders } from '@/hooks/useReminders';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useEntitlement } from '@/context/EntitlementProvider';
@@ -54,13 +55,14 @@ export default function HomeScreen() {
   const { data: reminders } = useUpcomingMedicationReminders();
   const { data: appointments } = useAppointments();
 
-  // Sampled into state (not read via Date.now() during render) so the
+  // Sampled into state each minute (not read via Date.now() during render) so the
   // "days until expiry" math below stays a pure function of state.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60 * 60 * 1000);
+    const interval = setInterval(() => setNow(Date.now()), 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+  const lifetimePrice = useLifetimePrice();
   const { showTrialCountdown, trialDaysLeft, isReadOnly } = useEntitlement();
 
   // The gradient hero runs edge-to-edge under the status bar, so the bar's
@@ -81,12 +83,14 @@ export default function HomeScreen() {
     for (const reminder of reminders ?? []) {
       const medication = medicationById.get(reminder.medicationId);
       if (!medication) continue;
+      const reminderLocal = `${reminder.reminderDate}T${reminder.reminderTime}:00`;
+      const overdue = new Date(reminderLocal).getTime() < now;
       entries.push({
         id: `reminder-${reminder.id}`,
-        icon: 'notifications-outline',
+        icon: overdue ? 'time-outline' : 'notifications-outline',
         title: medication.name,
-        subtitle: `${formatLocalDate(`${reminder.reminderDate}T${reminder.reminderTime}:00`)} · ${formatLocalTime(`${reminder.reminderDate}T${reminder.reminderTime}:00`)}`,
-        tone: 'accent',
+        subtitle: `${overdue ? 'Overdue · ' : ''}${formatLocalDate(reminderLocal)} · ${formatLocalTime(reminderLocal)}`,
+        tone: overdue ? 'warning' : 'accent',
         onPress: () => router.push(`/record/new?medicationId=${medication.id}`),
       });
     }
@@ -108,14 +112,17 @@ export default function HomeScreen() {
     for (const medication of medications ?? []) {
       if (
         medication.status === 'active' &&
-        medication.lowStockThreshold != null &&
-        medication.totalStock <= medication.lowStockThreshold
+        medication.stockUnit != null &&
+        medication.totalStock <= (medication.lowStockThreshold ?? 0)
       ) {
         entries.push({
           id: `low-stock-${medication.id}`,
           icon: 'alert-circle-outline',
           title: medication.name,
-          subtitle: `Low stock — ${medication.totalStock} ${medication.stockUnit} left`,
+          subtitle:
+            medication.totalStock <= 0
+              ? `Out of stock — 0 ${medication.stockUnit} left`
+              : `Low stock — ${medication.totalStock} ${medication.stockUnit} left`,
           tone: 'warning',
           onPress: () => router.push(`/medication/${medication.id}/stock`),
         });
@@ -142,19 +149,14 @@ export default function HomeScreen() {
 
   const visibleUpcoming = showAllUpcoming ? upcoming : upcoming.slice(0, UPCOMING_PREVIEW_COUNT);
   const activeCount = (medications ?? []).filter((m) => m.status === 'active').length;
-  const lowStockCount = upcoming.filter((e) => e.tone === 'warning').length;
+  const attentionCount = upcoming.filter((e) => e.tone === 'warning').length;
   const greeting = greetingForHour(new Date(now).getHours());
 
   const quickActions: QuickAction[] = [
-    { key: 'add', icon: 'add', label: 'Add', onPress: () => setQuickAddVisible(true), primary: true },
-    { key: 'history', icon: 'time-outline', label: 'History', onPress: () => router.push('/(app)/history') },
-    { key: 'providers', icon: 'people-outline', label: 'Providers', onPress: () => router.push('/provider') },
-    {
-      key: 'summary',
-      icon: 'document-text-outline',
-      label: 'Summary',
-      onPress: () => router.push('/(app)/health-summary'),
-    },
+    { key: 'log', icon: 'water-outline', label: 'Log', onPress: () => router.push('/record/new'), primary: true },
+    { key: 'symptom', icon: 'pulse-outline', label: 'Symptom', onPress: () => router.push('/symptom/new') },
+    { key: 'weight', icon: 'scale-outline', label: 'Weight', onPress: () => router.push('/weight/new') },
+    { key: 'more', icon: 'add', label: 'More', onPress: () => setQuickAddVisible(true) },
   ];
 
   return (
@@ -174,13 +176,6 @@ export default function HomeScreen() {
                 : `${activeCount} active medication${activeCount === 1 ? '' : 's'}`}
             </Text>
           </View>
-          <Pressable
-            accessibilityLabel="Settings"
-            onPress={() => router.push('/(app)/settings')}
-            style={styles.heroIconButton}
-          >
-            <Ionicons name="settings-outline" size={20} color={colors.textOnAccent} />
-          </Pressable>
         </View>
       </LinearGradient>
 
@@ -197,7 +192,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, lowStockCount > 0 && { color: colors.warning }]}>{lowStockCount}</Text>
+            <Text style={[styles.statValue, attentionCount > 0 && { color: colors.warning }]}>{attentionCount}</Text>
             <Text style={styles.statLabel}>Needs attention</Text>
           </View>
         </Card>
@@ -235,13 +230,13 @@ export default function HomeScreen() {
           <Card style={[styles.trialCard, { backgroundColor: colors.errorSoft }]}>
             <Text style={typography.cardTitle}>Your free trial has ended</Text>
             <Text style={[typography.bodySecondary, { marginTop: 2 }]}>
-              Unlock Mediary for lifetime access — NZ$16.99
+              Unlock Mediary for lifetime access — {lifetimePrice}
             </Text>
             <PrimaryButton label="Unlock Lifetime Access" onPress={() => router.push('/paywall')} style={{ marginTop: spacing.sm }} />
           </Card>
         )}
 
-        <Section title="Upcoming">
+        <Section title="Upcoming & attention">
         {upcoming.length === 0 ? (
           <Text style={typography.bodySecondary}>Nothing coming up right now.</Text>
         ) : (
@@ -275,7 +270,7 @@ export default function HomeScreen() {
         )}
       </Section>
 
-      <Section title="Your medications" action={<TextButton label="Add" onPress={() => router.push('/medication/new')} />}>
+      <Section title="Your medications" action={<TextButton label="Add medication" onPress={() => router.push('/medication/new')} />}>
         {medicationsLoading ? (
           <LoadingState />
         ) : !medications?.length ? (
@@ -334,14 +329,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: 'rgba(255,255,255,0.82)',
     marginTop: spacing.xxs,
-  },
-  heroIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: spacing.lg,

@@ -14,6 +14,8 @@ interface FieldProps {
   maximumDate?: Date;
   required?: boolean;
   containerStyle?: ViewStyle;
+  /** When set, shown (muted) instead of the date — for optional, still-empty fields. */
+  placeholder?: string;
 }
 
 function displayValue(date: Date, mode: 'date' | 'time'): string {
@@ -30,6 +32,7 @@ function Field({
   maximumDate,
   required,
   containerStyle,
+  placeholder,
 }: FieldProps & { mode: 'date' | 'time'; icon: keyof typeof Ionicons.glyphMap }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -60,7 +63,9 @@ function Field({
       )}
       <Pressable style={styles.field} onPress={openPicker} accessibilityRole="button">
         <Ionicons name={icon} size={18} color={colors.textMuted} style={{ marginRight: spacing.xs }} />
-        <Text style={typography.body}>{displayValue(value, mode)}</Text>
+        <Text style={placeholder ? [typography.body, { color: colors.textMuted }] : typography.body}>
+          {placeholder ?? displayValue(value, mode)}
+        </Text>
       </Pressable>
 
       {Platform.OS === 'ios' && (

@@ -1,6 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
-const BUNDLE_ID = 'com.mediary.app';
+const googleIosUrlScheme = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME;
+const BUNDLE_ID = 'nz.co.artifactai.mediary';
 
 const config: ExpoConfig = {
   name: 'Mediary',
@@ -59,20 +60,20 @@ const config: ExpoConfig = {
         color: '#8BA893',
       },
     ],
-    [
-      '@react-native-google-signin/google-signin',
-      {
-        iosUrlScheme: process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME ?? 'com.googleusercontent.apps.REPLACE_ME',
-      },
-    ],
     '@react-native-community/datetimepicker',
+    // Only register the Google URL scheme once a real iOS client exists: a
+    // placeholder scheme is rejected by App Store Connect (ITMS-90158).
+    ...(googleIosUrlScheme
+      ? [['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }] as [string, object]]
+      : []),
   ],
   experiments: {
     typedRoutes: true,
   },
   extra: {
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? 'REPLACE_WITH_EAS_PROJECT_ID',
+      // Not a secret; `eas init` can't write to a dynamic config, so it lives here.
+      projectId: process.env.EAS_PROJECT_ID ?? '5066a548-8b48-48bd-8fe1-be43d39fe580',
     },
   },
 };

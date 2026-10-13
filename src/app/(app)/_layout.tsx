@@ -30,7 +30,7 @@ export default function AppTabsLayout() {
       />
       <Tabs.Screen
         name="health-summary"
-        options={{ title: 'Health Summary', tabBarIcon: ({ color, size }) => <Ionicons name="document-text-outline" size={size} color={color} /> }}
+        options={{ title: 'Summary', tabBarIcon: ({ color, size }) => <Ionicons name="document-text-outline" size={size} color={color} /> }}
       />
       <Tabs.Screen
         name="settings"

@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase';
-import { localDateKey } from '@/lib/dateTime';
+import { captureLocalDateTime, localDateKey } from '@/lib/dateTime';
 import { SEVERITY_LABELS } from '@/constants/symptoms';
 import { CATEGORY_LABELS } from '@/constants/categories';
 import type { HistoryItem, HistoryRecordType } from '@/types/domain';
+import { formatAmount } from '@/lib/formatAmount';
 
 export interface HistoryFilter {
   startDateKey?: string;
@@ -51,7 +52,7 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
         medicationId: r.medication_id,
         title: med?.name ?? 'Medication',
         subtitle: r.taken
-          ? [r.amount ? `${r.amount} ${r.amount_unit}` : null, r.site ?? r.treatment_area].filter(Boolean).join(' · ') || 'Taken'
+          ? [formatAmount(r.amount, r.amount_unit, r.amount_unit_custom), r.site ?? r.treatment_area].filter(Boolean).join(' · ') || 'Taken'
           : 'Not recorded',
       });
     }
@@ -135,7 +136,11 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
     const { data, error } = await query;
     if (error) throw error;
     for (const t of data ?? []) {
-      const localKey = localDateKey(t.created_at);
+      // Reversals are bookkeeping for deleted records; the per-medication
+      // stock history screen still lists them.
+      if (t.type === 'reversal') continue;
+      const occurredLocal = captureLocalDateTime(new Date(t.created_at)).local;
+      const localKey = localDateKey(occurredLocal);
       if (filter.startDateKey && localKey < filter.startDateKey) continue;
       if (filter.endDateKey && localKey > filter.endDateKey) continue;
       const med = medications.get(t.medication_id);
@@ -144,13 +149,11 @@ export async function fetchHistory(filter: HistoryFilter = {}): Promise<HistoryI
           ? 'Stock added'
           : t.type === 'manual_adjustment'
             ? 'Manual adjustment'
-            : t.type === 'reversal'
-              ? 'Stock reversal'
-              : 'Stock used';
+            : 'Stock used';
       items.push({
         id: t.id,
         type: 'stock',
-        occurredLocal: t.created_at,
+        occurredLocal,
         medicationId: t.medication_id,
         title: `${med?.name ?? 'Medication'} — ${label}`,
         subtitle: `${t.quantity > 0 ? '+' : ''}${t.quantity} ${t.stock_unit}`,

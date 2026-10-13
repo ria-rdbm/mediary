@@ -23,13 +23,13 @@ export interface SymptomFormValues {
   notes: string;
 }
 
-export function defaultSymptomFormValues(): SymptomFormValues {
+export function defaultSymptomFormValues(startAt: Date = combineDateAndTime(new Date(), defaultRecordTime())): SymptomFormValues {
   return {
-    name: DEFAULT_SYMPTOMS[0],
+    name: '',
     isCustomName: false,
     severity: 'mild',
     medicationId: null,
-    startAt: combineDateAndTime(new Date(), defaultRecordTime()),
+    startAt,
     endAt: null,
     isOngoing: true,
     notes: '',
@@ -56,7 +56,7 @@ export function SymptomForm({
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      await onSubmit(values);
+      await onSubmit({ ...values, endAt: values.isOngoing ? null : (values.endAt ?? values.startAt) });
     } finally {
       setSaving(false);
     }
@@ -66,7 +66,7 @@ export function SymptomForm({
     <View>
       <Select
         label="Symptom"
-        value={values.isCustomName ? 'Other' : values.name}
+        value={values.isCustomName ? 'Other' : values.name || null}
         options={DEFAULT_SYMPTOMS.map((s) => ({ value: s, label: s }))}
         onChange={(v) => {
           update('isCustomName', v === 'Other');

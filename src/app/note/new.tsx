@@ -11,17 +11,17 @@ import { spacing } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
 import { useCreateNote } from '@/hooks/useNotes';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
-import { combineDateAndTime, defaultRecordTime } from '@/lib/dateTime';
+import { combineDateAndTime, initialDateTimeForDateKey } from '@/lib/dateTime';
 
 export default function NewNoteScreen() {
-  const { medicationId } = useLocalSearchParams<{ medicationId?: string }>();
+  const { medicationId, date } = useLocalSearchParams<{ medicationId?: string; date?: string }>();
   const { data: medications, isLoading } = useMedications();
   const createNote = useCreateNote();
   const { guard } = useWriteGuard();
 
   const [note, setNote] = useState('');
   const [selectedMedicationId, setSelectedMedicationId] = useState<string | null>(medicationId ?? null);
-  const [occurredAt, setOccurredAt] = useState(combineDateAndTime(new Date(), defaultRecordTime()));
+  const [occurredAt, setOccurredAt] = useState(initialDateTimeForDateKey(date));
   const [saving, setSaving] = useState(false);
 
   if (isLoading || !medications) {

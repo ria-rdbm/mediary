@@ -19,12 +19,15 @@ export interface AppointmentFormValues {
   nextAppointmentLocal: string;
 }
 
-export function defaultAppointmentFormValues(medicationId: string | null = null): AppointmentFormValues {
+export function defaultAppointmentFormValues(
+  medicationId: string | null = null,
+  visitAt: Date = combineDateAndTime(new Date(), defaultRecordTime()),
+): AppointmentFormValues {
   return {
     medicationId,
     providerId: null,
     providerNameSnapshot: null,
-    visitAt: combineDateAndTime(new Date(), defaultRecordTime()),
+    visitAt,
     providerInstructions: '',
     myNotes: '',
     treatmentChanges: '',

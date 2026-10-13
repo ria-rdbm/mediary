@@ -7,9 +7,10 @@ import { RecordForm, defaultRecordFormValues } from '@/components/composed/Recor
 import { useMedications } from '@/hooks/useMedications';
 import { useLogTreatmentRecord } from '@/hooks/useTreatmentRecords';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
+import { initialDateTimeForDateKey } from '@/lib/dateTime';
 
 export default function NewRecordScreen() {
-  const { medicationId } = useLocalSearchParams<{ medicationId?: string }>();
+  const { medicationId, date } = useLocalSearchParams<{ medicationId?: string; date?: string }>();
   const { data: medications, isLoading } = useMedications(['active', 'paused']);
   const logRecord = useLogTreatmentRecord();
   const { guard } = useWriteGuard();
@@ -28,7 +29,11 @@ export default function NewRecordScreen() {
       <Header title="Log Treatment" />
       <RecordForm
         medications={medications}
-        initial={defaultRecordFormValues(medicationId)}
+        initial={defaultRecordFormValues(
+          medicationId,
+          medications.find((m) => m.id === medicationId),
+          initialDateTimeForDateKey(date),
+        )}
         submitLabel="Save"
         onSubmit={async (values) => {
           if (!guard()) throw new Error('read-only');

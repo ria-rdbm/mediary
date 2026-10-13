@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Text, StyleSheet, Linking } from 'react-native';
+import Constants from 'expo-constants';
+import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Section } from '@/components/ui/Section';
 import { ListRow } from '@/components/ui/ListRow';
@@ -9,6 +10,9 @@ import { typography, spacing } from '@/theme';
 import { useAuth } from '@/context/AuthProvider';
 import { useEntitlement } from '@/context/EntitlementProvider';
 import { deleteAccount } from '@/services/account';
+import { ShareHistorySheet } from '@/components/composed/ShareHistorySheet';
+import { hasNotificationPermission } from '@/lib/notifications';
+import { LEGAL_CONTACT_EMAIL } from '@/constants/legalContent';
 import { supabase } from '@/lib/supabase';
 import { resetRevenueCatIdentity } from '@/lib/revenuecat';
 
@@ -19,8 +23,20 @@ export default function SettingsScreen() {
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [notificationsOn, setNotificationsOn] = useState<boolean | null>(null);
+  const [shareVisible, setShareVisible] = useState(false);
+
+  // Re-check on focus: the user may have changed it in the iOS Settings app.
+  useFocusEffect(
+    useCallback(() => {
+      void hasNotificationPermission().then(setNotificationsOn);
+    }, []),
+  );
 
   const handleDelete = async () => {
+    setDeleteError(null);
     setDeleting(true);
     try {
       await deleteAccount();
@@ -32,6 +48,7 @@ export default function SettingsScreen() {
       await supabase.auth.signOut({ scope: 'local' });
     } catch (err) {
       console.warn('Account deletion failed', err);
+      setDeleteError('Could not delete your account. Please try again.');
     } finally {
       setDeleting(false);
     }
@@ -52,16 +69,35 @@ export default function SettingsScreen() {
         {!isLifetime && (
           <ListRow title="Unlock Lifetime Access" showChevron onPress={() => router.push('/paywall')} />
         )}
-        <ListRow title="Restore Purchase" showChevron onPress={() => router.push('/paywall')} />
       </Section>
 
       <Section title="Manage">
         <ListRow title="Providers & clinics" showChevron onPress={() => router.push('/provider')} />
       </Section>
 
+      <Section title="Preferences">
+        <ListRow
+          title="Notifications"
+          subtitle={notificationsOn == null ? undefined : notificationsOn ? 'On' : 'Off — tap to turn on in iOS Settings'}
+          showChevron
+          onPress={() => void Linking.openSettings()}
+        />
+        <ListRow title="Share my history" subtitle="Send a period as text to another app" showChevron onPress={() => setShareVisible(true)} />
+      </Section>
+
       <Section title="Privacy">
         <ListRow title="Privacy Policy" showChevron onPress={() => router.push('/legal/privacy')} />
         <ListRow title="Terms of Use" showChevron onPress={() => router.push('/legal/terms')} />
+      </Section>
+
+      <Section title="Support">
+        <ListRow
+          title="Contact support"
+          subtitle={LEGAL_CONTACT_EMAIL}
+          showChevron
+          onPress={() => void Linking.openURL(`mailto:${LEGAL_CONTACT_EMAIL}`)}
+        />
+        <ListRow title="Version" subtitle={Constants.expoConfig?.version ?? '—'} />
       </Section>
 
       <Section title="Account">
@@ -73,6 +109,8 @@ export default function SettingsScreen() {
         Mediary helps you record and organise your treatment information. It does not provide medical advice,
         diagnosis, or treatment recommendations.
       </Text>
+
+      <ShareHistorySheet visible={shareVisible} onClose={() => setShareVisible(false)} />
 
       <ConfirmationDialog
         visible={signOutVisible}
@@ -88,7 +126,7 @@ export default function SettingsScreen() {
       <ConfirmationDialog
         visible={deleteVisible}
         title="Delete your account?"
-        message="This will permanently delete your Mediary account and all associated data. This action cannot be undone."
+        message={`This will permanently delete your Mediary account and all associated data. This action cannot be undone.${deleteError ? `\n\n${deleteError}` : ''}`}
         confirmLabel={deleting ? 'Deleting…' : 'Delete Account'}
         destructive
         onConfirm={handleDelete}

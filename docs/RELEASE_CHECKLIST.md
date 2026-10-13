@@ -18,7 +18,7 @@ Each references the exact file/section in the repo that depends on it.
 
 ## 2. Apple Developer / App Store Connect
 
-- [ ] Register the bundle id `com.mediary.app` (or your real bundle id —
+- [ ] Register the bundle id `nz.co.artifactai.mediary` (or your real bundle id —
       update `app.config.ts` and this checklist together if it changes).
 - [ ] Enable "Sign In with Apple" capability on the App ID.
 - [ ] Create a "Sign in with Apple" key (Certificates, IDs & Profiles →
@@ -36,7 +36,7 @@ Each references the exact file/section in the repo that depends on it.
 
 ## 3. Google Play Console
 
-- [ ] Register the app, package name `com.mediary.app`.
+- [ ] Register the app, package name `nz.co.artifactai.mediary`.
 - [ ] Monetization → Products → In-app products → create
       `lifetime_access`, one-time, price ≈ NZ$16.99.
 - [ ] App content → Data safety → fill in using

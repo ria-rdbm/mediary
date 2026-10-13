@@ -1,5 +1,5 @@
 import React from 'react';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { LoadingState } from '@/components/ui/States';
@@ -7,8 +7,10 @@ import { SymptomForm, defaultSymptomFormValues } from '@/components/composed/Sym
 import { useMedications } from '@/hooks/useMedications';
 import { useCreateSymptom } from '@/hooks/useSymptoms';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
+import { initialDateTimeForDateKey } from '@/lib/dateTime';
 
 export default function NewSymptomScreen() {
+  const { date } = useLocalSearchParams<{ date?: string }>();
   const { data: medications, isLoading } = useMedications();
   const createSymptom = useCreateSymptom();
   const { guard } = useWriteGuard();
@@ -27,7 +29,7 @@ export default function NewSymptomScreen() {
       <Header title="Add Symptom" />
       <SymptomForm
         medications={medications}
-        initial={defaultSymptomFormValues()}
+        initial={defaultSymptomFormValues(initialDateTimeForDateKey(date))}
         submitLabel="Save"
         onSubmit={async (values) => {
           if (!guard()) return;
