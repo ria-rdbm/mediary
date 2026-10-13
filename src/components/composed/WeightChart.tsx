@@ -6,7 +6,7 @@ import { formatLocalDate } from '@/lib/dateTime';
 import type { WeightRecord } from '@/types/domain';
 
 const CHART_HEIGHT = 160;
-const PADDING_X = 28;
+const PADDING_X = 44;
 const PADDING_TOP = 20;
 const PADDING_BOTTOM = 24;
 
