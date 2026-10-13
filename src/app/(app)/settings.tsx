@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import { Text, StyleSheet, Linking } from 'react-native';
-import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Section } from '@/components/ui/Section';
@@ -12,7 +11,6 @@ import { useEntitlement } from '@/context/EntitlementProvider';
 import { deleteAccount } from '@/services/account';
 import { ShareHistorySheet } from '@/components/composed/ShareHistorySheet';
 import { hasNotificationPermission } from '@/lib/notifications';
-import { LEGAL_CONTACT_EMAIL } from '@/constants/legalContent';
 import { supabase } from '@/lib/supabase';
 import { resetRevenueCatIdentity } from '@/lib/revenuecat';
 
@@ -90,16 +88,6 @@ export default function SettingsScreen() {
       <Section title="Privacy">
         <ListRow title="Privacy Policy" showChevron onPress={() => router.push('/legal/privacy')} />
         <ListRow title="Terms of Use" showChevron onPress={() => router.push('/legal/terms')} />
-      </Section>
-
-      <Section title="Support">
-        <ListRow
-          title="Contact support"
-          subtitle={LEGAL_CONTACT_EMAIL}
-          showChevron
-          onPress={() => void Linking.openURL(`mailto:${LEGAL_CONTACT_EMAIL}`)}
-        />
-        <ListRow title="Version" subtitle={Constants.expoConfig?.version ?? '—'} />
       </Section>
 
       <Section title="Account">
