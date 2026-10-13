@@ -26,6 +26,12 @@ export type ProfileRow = {
   disclaimer_acknowledged_at: string | null;
   onboarding_completed_at: string | null;
   onboarding_categories: string[];
+  full_name: string | null;
+  gender: 'female' | 'male' | 'other' | 'prefer_not_to_say' | null;
+  date_of_birth: string | null;
+  weight_kg: number | null;
+  nhi_number: string | null;
+  preferred_provider_name: string | null;
   created_at: string;
   updated_at: string;
 };

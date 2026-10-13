@@ -72,6 +72,8 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title="Manage">
+        <ListRow title="Profile" showChevron onPress={() => router.push('/profile')} />
+        <ListRow title="Weight" showChevron onPress={() => router.push('/weight')} />
         <ListRow title="Providers & clinics" showChevron onPress={() => router.push('/provider')} />
       </Section>
 
