@@ -85,8 +85,6 @@ export function ProfileDetailsForm({ initial, submitLabel, submitting, onSubmit 
         required
       />
 
-      <Text style={styles.sectionLabel}>Optional</Text>
-
       <Input
         label="Weight (kg)"
         placeholder="e.g. 70"
@@ -105,7 +103,7 @@ export function ProfileDetailsForm({ initial, submitLabel, submitting, onSubmit 
       />
 
       <Input
-        label="Preferred medical provider"
+        label="Doctor or clinic"
         placeholder="e.g. Dr. Smith — Auckland Clinic"
         value={preferredProviderName}
         onChangeText={setPreferredProviderName}
@@ -125,13 +123,6 @@ export function ProfileDetailsForm({ initial, submitLabel, submitting, onSubmit 
 }
 
 const styles = StyleSheet.create({
-  sectionLabel: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-  },
   error: {
     ...typography.caption,
     color: colors.error,
