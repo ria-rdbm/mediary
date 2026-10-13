@@ -66,7 +66,7 @@ export function ProfileDetailsForm({ initial, submitLabel, submitting, onSubmit 
 
   return (
     <>
-      <Input label="Full name" placeholder="e.g. Jane Smith" value={fullName} onChangeText={setFullName} required />
+      <Input label="Name" placeholder="e.g. Jane Smith" value={fullName} onChangeText={setFullName} required />
 
       <Select
         label="Gender"
