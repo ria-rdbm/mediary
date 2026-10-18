@@ -22,6 +22,7 @@ export default function SignInScreen() {
       router.replace('/');
     } catch (err: unknown) {
       if ((err as { code?: string })?.code !== 'ERR_REQUEST_CANCELED') {
+        console.warn('Apple sign-in failed', err);
         setError('Sign in with Apple failed. Please try again.');
       }
     } finally {
