@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   content: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
