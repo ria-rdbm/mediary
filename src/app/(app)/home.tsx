@@ -270,7 +270,7 @@ export default function HomeScreen() {
         )}
       </Section>
 
-      <Section title="Your medications" action={<TextButton label="Add medication" onPress={() => router.push('/medication/new')} />}>
+      <Section title="Your medications">
         {medicationsLoading ? (
           <LoadingState />
         ) : !medications?.length ? (
