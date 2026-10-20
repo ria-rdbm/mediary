@@ -1,16 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Share, Alert, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
-import { TextButton } from '@/components/ui/Button';
+import { TextButton, IconButton } from '@/components/ui/Button';
 import { LoadingState, EmptyState } from '@/components/ui/States';
 import { WeightChart } from '@/components/composed/WeightChart';
 import { colors, typography, spacing, radius } from '@/theme';
 import { useHealthSummary } from '@/hooks/useHealthSummary';
 import { formatLocalDate, formatLocalTime } from '@/lib/dateTime';
 import { STATUS_LABELS } from '@/constants/categories';
-import type { HealthSummarySection } from '@/services/healthSummary';
+import type { HealthSummarySection, HealthSummaryData } from '@/services/healthSummary';
 import { formatAmount } from '@/lib/formatAmount';
+import { buildHealthSummaryShareText } from '@/services/export';
 
 function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -103,13 +104,40 @@ export default function HealthSummaryViewScreen() {
   const includeWeight = params.includeWeight === '1';
 
   const { data, isLoading } = useHealthSummary(medicationIds, params.startDateKey, params.endDateKey, includeWeight);
+  const [sharing, setSharing] = useState(false);
+
+  const handleShare = async (summary: HealthSummaryData) => {
+    setSharing(true);
+    try {
+      const text = buildHealthSummaryShareText(summary, params.startDateKey, params.endDateKey);
+      await Share.share({ message: text });
+    } catch (err) {
+      console.warn('Share failed', err);
+      Alert.alert('Could not share', 'Please try again.');
+    } finally {
+      setSharing(false);
+    }
+  };
 
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TextButton label="Back" onPress={() => router.back()} />
-        <Text style={typography.cardTitle}>Health Summary</Text>
-        <TextButton label="Done" onPress={() => router.dismissTo('/(app)/health-summary')} />
+        <Text style={[typography.cardTitle, styles.headerTitle]} numberOfLines={1}>
+          Health Summary
+        </Text>
+        <View style={styles.headerRight}>
+          {data && (
+            <IconButton
+              icon="share-outline"
+              accessibilityLabel="Share"
+              size={20}
+              onPress={() => void handleShare(data)}
+              disabled={sharing}
+            />
+          )}
+          <TextButton label="Done" onPress={() => router.dismissTo('/(app)/health-summary')} />
+        </View>
       </View>
 
       {isLoading ? (
@@ -148,13 +176,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.sm,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },

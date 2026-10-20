@@ -33,7 +33,7 @@ export default function NewWeightScreen() {
     setSaving(true);
     try {
       await createWeight.mutateAsync({ weightKg: value, recordedAt, note: note || null });
-      router.back();
+      router.replace('/weight');
     } finally {
       setSaving(false);
     }

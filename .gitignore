@@ -44,6 +44,9 @@ yarn-error.*
 supabase/.branches
 supabase/.temp
 
+# Claude Code local overrides
+.claude/settings.local.json
+
 # generated native folders
 /ios
 /android

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +35,14 @@ function periodToStartDateKey(period: Period): string {
 export default function HealthSummarySelectionScreen() {
   const { data: medications, isLoading } = useMedications();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const defaultApplied = useRef(false);
+
+  useEffect(() => {
+    if (defaultApplied.current || !medications?.length) return;
+    defaultApplied.current = true;
+    setSelectedIds([medications[0].id]);
+  }, [medications]);
+
   const [period, setPeriod] = useState<Period>('30d');
   const [includeWeight, setIncludeWeight] = useState(true);
   const [customStart, setCustomStart] = useState(() => parseDateKey(periodToStartDateKey('3m')));
