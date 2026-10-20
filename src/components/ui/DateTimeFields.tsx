@@ -43,9 +43,7 @@ function Field({
         value,
         mode,
         maximumDate,
-        onChange: (event, date) => {
-          if (event.type === 'set' && date) onChange(date);
-        },
+        onValueChange: (_, date) => onChange(date),
       });
     } else {
       setDraft(value);
@@ -76,7 +74,7 @@ function Field({
             mode={mode}
             display="spinner"
             maximumDate={maximumDate}
-            onChange={(_, date) => date && setDraft(date)}
+            onValueChange={(_, date) => setDraft(date)}
           />
           <PrimaryButton
             label="Done"
