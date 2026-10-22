@@ -5,16 +5,23 @@ import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { TimelineRow } from '@/components/ui/TimelineRow';
+import { Chip } from '@/components/ui/Chip';
+import { TimelineRow, type TimelineTag } from '@/components/ui/TimelineRow';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
 import { MonthCalendar } from '@/components/composed/MonthCalendar';
 import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
-import { colors, typography, spacing, radius } from '@/theme';
+import { colors, fonts, typography, spacing } from '@/theme';
 import { useHistory } from '@/hooks/useHistory';
 import { formatLocalDayHeading, formatLocalTime, localDateKey, todayDateKey } from '@/lib/dateTime';
 import { useUpcomingMedicationReminders } from '@/hooks/useReminders';
 import { useMedications } from '@/hooks/useMedications';
-import { HISTORY_ICONS, HISTORY_COLORS, historyItemRoute } from '@/lib/historyIcons';
+import {
+  HISTORY_ICONS,
+  HISTORY_COLORS,
+  HISTORY_ICON_BACKGROUNDS,
+  HISTORY_TYPE_LABELS,
+  historyItemRoute,
+} from '@/lib/historyIcons';
 import type { HistoryItem, HistoryRecordType } from '@/types/domain';
 
 const TYPE_FILTERS: { value: HistoryRecordType | 'all'; label: string }[] = [
@@ -26,6 +33,17 @@ const TYPE_FILTERS: { value: HistoryRecordType | 'all'; label: string }[] = [
   { value: 'appointment', label: 'Appointments' },
   { value: 'stock', label: 'Stock' },
 ];
+
+/** Short values become pills (amount, severity, kg); free text stays a subtitle. */
+function timelineTags(item: HistoryItem): TimelineTag[] | undefined {
+  if (item.type === 'note' || item.type === 'appointment' || !item.subtitle) return undefined;
+  const parts = item.subtitle.split(' · ').filter(Boolean);
+  const tone: TimelineTag['tone'] = item.type === 'symptom' ? 'teal' : 'accent';
+  return [
+    ...parts.map((label, i): TimelineTag => ({ label, tone: i === 0 ? tone : 'neutral' })),
+    { label: HISTORY_TYPE_LABELS[item.type] },
+  ];
+}
 
 function groupByDay(items: HistoryItem[]): { dateKey: string; items: HistoryItem[] }[] {
   const groups = new Map<string, HistoryItem[]>();
@@ -92,7 +110,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <Screen scroll refreshing={isRefetching} onRefresh={refetch}>
+    <Screen scroll aboveTabBar refreshing={isRefetching} onRefresh={refetch}>
       <Text style={[typography.screenTitle, styles.title]}>History</Text>
 
       <SegmentedControl
@@ -106,6 +124,7 @@ export default function HistoryScreen() {
 
       <Input
         placeholder="Search medication, symptom, provider, notes"
+        icon="search"
         value={search}
         onChangeText={setSearch}
         containerStyle={styles.search}
@@ -113,14 +132,13 @@ export default function HistoryScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterContent}>
         {TYPE_FILTERS.map((f) => (
-          <Pressable
+          <Chip
             key={f.value}
-            accessibilityRole="button"
+            label={f.label}
+            icon={f.value === 'all' ? undefined : HISTORY_ICONS[f.value]}
+            selected={typeFilter === f.value}
             onPress={() => setTypeFilter(f.value)}
-            style={[styles.filterChip, typeFilter === f.value && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterLabel, typeFilter === f.value && styles.filterLabelActive]}>{f.label}</Text>
-          </Pressable>
+          />
         ))}
       </ScrollView>
 
@@ -142,8 +160,10 @@ export default function HistoryScreen() {
                     time={formatLocalTime(item.occurredLocal)}
                     title={item.title}
                     subtitle={item.subtitle ?? undefined}
+                    tags={timelineTags(item)}
                     icon={HISTORY_ICONS[item.type]}
                     accentColor={HISTORY_COLORS[item.type]}
+                    iconBackground={HISTORY_ICON_BACKGROUNDS[item.type]}
                     isLast={index === group.items.length - 1}
                     onPress={() => openItem(item)}
                   />
@@ -168,7 +188,7 @@ export default function HistoryScreen() {
           <View style={styles.selectedDaySection}>
             {selectedDateKey && (
               <View style={styles.dayHeader}>
-                <Text style={[typography.sectionTitle, styles.dayHeaderTitle]} numberOfLines={1}>
+                <Text style={styles.dayHeaderTitle} numberOfLines={1}>
                   {formatLocalDayHeading(`${selectedDateKey}T00:00:00`)}
                 </Text>
                 <Pressable
@@ -178,7 +198,7 @@ export default function HistoryScreen() {
                   style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.6 }]}
                   hitSlop={6}
                 >
-                  <Ionicons name="add" size={18} color={colors.accentStrong} />
+                  <Ionicons name="add" size={18} color={colors.accent} />
                   <Text style={styles.addPillLabel}>Add</Text>
                 </Pressable>
               </View>
@@ -203,8 +223,10 @@ export default function HistoryScreen() {
                   time={formatLocalTime(item.occurredLocal)}
                   title={item.title}
                   subtitle={item.subtitle ?? undefined}
+                  tags={timelineTags(item)}
                   icon={HISTORY_ICONS[item.type]}
                   accentColor={HISTORY_COLORS[item.type]}
+                  iconBackground={HISTORY_ICON_BACKGROUNDS[item.type]}
                   isLast={index === selectedDayItems.length - 1}
                   onPress={() => openItem(item)}
                 />
@@ -223,21 +245,11 @@ const styles = StyleSheet.create({
   search: { marginTop: spacing.md },
   filterRow: { marginTop: spacing.xs, marginBottom: spacing.xs, flexGrow: 0 },
   filterContent: { gap: spacing.xs, paddingVertical: spacing.xxs },
-  filterChip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceSecondary,
-  },
-  filterChipActive: { backgroundColor: colors.accent },
-  filterLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
-  filterLabelActive: { color: colors.textOnAccent },
   timeline: { marginTop: spacing.sm },
   dayGroup: { marginBottom: spacing.lg },
   dayHeading: {
-    ...typography.metadata,
+    ...typography.cardTitle,
     marginBottom: spacing.sm,
-    textTransform: 'uppercase',
   },
   dayHeader: {
     flexDirection: 'row',
@@ -245,18 +257,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
   },
-  dayHeaderTitle: { flex: 1, marginRight: spacing.sm },
+  dayHeaderTitle: { ...typography.cardTitle, fontSize: 17, flex: 1, marginRight: spacing.sm },
   addPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    paddingVertical: 6,
-    paddingLeft: 8,
-    paddingRight: 12,
+    height: 34,
+    paddingLeft: 10,
+    paddingRight: 14,
     borderRadius: 999,
     backgroundColor: colors.accentSoft,
   },
-  addPillLabel: { ...typography.body, color: colors.accentStrong, fontWeight: '600' },
+  addPillLabel: { ...typography.body, fontSize: 15, color: colors.accent, fontFamily: fonts.semibold },
   selectedDaySection: {
     marginTop: spacing.lg,
   },

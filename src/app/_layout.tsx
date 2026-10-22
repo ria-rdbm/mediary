@@ -4,10 +4,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts, Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-google-fonts/geist';
+import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/context/AuthProvider';
 import { EntitlementProvider } from '@/context/EntitlementProvider';
 import { addNotificationResponseListener, getLastNotificationRoute, type NotificationRoute } from '@/lib/notifications';
+
+// Hold the native splash until the brand fonts are ready, so no screen ever
+// renders a frame in the system font.
+void SplashScreen.preventAutoHideAsync();
 
 function routeForNotification(route: NotificationRoute): string | null {
   switch (route.kind) {
@@ -56,6 +63,22 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    Fraunces_500Medium,
+    Fraunces_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) void SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
+
+  // On a load failure, fall through and render with system fonts rather
+  // than leaving the user stuck on the splash.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

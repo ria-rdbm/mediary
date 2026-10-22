@@ -1,21 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
+import { InitialAvatar } from '@/components/ui/InitialAvatar';
 import { Select } from '@/components/ui/Select';
 import { PrimaryButton } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
 import { AmountUnitField } from '@/components/composed/AmountUnitField';
-import { colors, typography, spacing } from '@/theme';
+import { ColorSwatchPicker } from '@/components/composed/ColorSwatchPicker';
+import { colors, fonts, typography, spacing } from '@/theme';
 import { CATEGORY_LABELS, ALL_CATEGORIES } from '@/constants/categories';
 import type { MedicationCategory } from '@/constants/categories';
 import type { DoseUnit } from '@/constants/units';
 import { useCreateMedication } from '@/hooks/useMedications';
 import { useProviders } from '@/hooks/useProviders';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
+
+// Name shortcuts only — picking one fills the name and category, never a dose.
+const QUICK_PICKS: { name: string; category: MedicationCategory }[] = [
+  { name: 'Wegovy', category: 'glp1' },
+  { name: 'Ozempic', category: 'glp1' },
+  { name: 'Mounjaro', category: 'glp1' },
+];
 
 export default function NewMedicationScreen() {
   const [name, setName] = useState('');
@@ -61,9 +69,34 @@ export default function NewMedicationScreen() {
   return (
     <Screen scroll>
       <Header title="Add Medication" />
-      <Input label="Name" placeholder="e.g. Ozempic, Insulin, Botox" value={name} onChangeText={setName} required />
+      <Input
+        label="Name"
+        icon="create-outline"
+        placeholder="e.g. Wegovy, Insulin, Botox"
+        value={name}
+        onChangeText={setName}
+        required
+        containerStyle={styles.nameField}
+      />
+      <View style={styles.quickPicks}>
+        {QUICK_PICKS.map((pick) => (
+          <Pressable
+            key={pick.name}
+            accessibilityRole="button"
+            onPress={() => {
+              setName(pick.name);
+              setCategory(pick.category);
+            }}
+            style={({ pressed }) => [styles.quickPick, name === pick.name && styles.quickPickOn, pressed && { opacity: 0.7 }]}
+          >
+            <InitialAvatar name={pick.name} size={26} />
+            <Text style={styles.quickPickLabel}>{pick.name}</Text>
+          </Pressable>
+        ))}
+      </View>
       <Select
         label="Category"
+        icon="pricetag-outline"
         value={category}
         options={ALL_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
         onChange={setCategory}
@@ -78,23 +111,14 @@ export default function NewMedicationScreen() {
         customUnit={customUnit}
         onCustomUnitChange={setCustomUnit}
       />
-      <Section title="Colour" spacingTop="md">
-        <View style={styles.colorRow}>
-          {colors.medicationPalette.map((paletteColor) => (
-            <Pressable
-              key={paletteColor}
-              onPress={() => setColor(paletteColor)}
-              style={[styles.colorSwatch, { backgroundColor: paletteColor }]}
-            >
-              {color === paletteColor && <Ionicons name="checkmark" size={16} color={colors.textOnAccent} />}
-            </Pressable>
-          ))}
-        </View>
+      <Section title="Colour" spacingTop="md" variant="label">
+        <ColorSwatchPicker value={color} onChange={setColor} />
       </Section>
-      <Section title="Default provider / clinic (optional)" spacingTop="md">
+      <Section title="Default provider / clinic (optional)" spacingTop="md" variant="label">
         <Select
           value={defaultProviderId}
           placeholder="None"
+          icon="business-outline"
           options={(providers ?? []).map((p) => ({ value: p.id, label: p.name }))}
           onChange={setDefaultProviderId}
         />
@@ -107,13 +131,26 @@ export default function NewMedicationScreen() {
 
 const styles = StyleSheet.create({
   sectionLabel: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
+    ...typography.label,
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xxs,
   },
-  colorRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
-  colorSwatch: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  nameField: { marginBottom: spacing.sm },
+  quickPicks: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.md },
+  quickPick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 42,
+    paddingLeft: 6,
+    paddingRight: 14,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+  },
+  quickPickOn: { borderColor: colors.accentBright, backgroundColor: colors.lightBackground },
+  quickPickLabel: { fontFamily: fonts.medium, fontSize: 13, color: colors.textPrimary },
   error: {
     ...typography.caption,
     color: colors.error,

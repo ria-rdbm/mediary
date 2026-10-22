@@ -1,24 +1,29 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, Pressable, Image, ScrollView, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { setStatusBarStyle } from 'expo-status-bar';
 import { Screen } from '@/components/ui/Screen';
 import { Section } from '@/components/ui/Section';
 import { Card } from '@/components/ui/Card';
 import { PrimaryButton, TextButton } from '@/components/ui/Button';
 import { EmptyState, LoadingState } from '@/components/ui/States';
-import { MedicationListItem } from '@/components/composed/MedicationListItem';
+import { InitialAvatar } from '@/components/ui/InitialAvatar';
 import { QuickAddSheet } from '@/components/composed/QuickAddSheet';
-import { colors, typography, spacing, radius } from '@/theme';
+import { HeroHeader, HeroSheet } from '@/components/composed/HeroLayout';
+import { colors, fonts, typography, spacing } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
 import { useLifetimePrice } from '@/hooks/useLifetimePrice';
 import { useUpcomingMedicationReminders } from '@/hooks/useReminders';
 import { useAppointments } from '@/hooks/useAppointments';
+import { useRecentTakenRecords } from '@/hooks/useTreatmentRecords';
+import { useSymptoms } from '@/hooks/useSymptoms';
+import { useWeightRecords } from '@/hooks/useWeight';
+import { STATUS_LABELS } from '@/constants/categories';
+import { SEVERITY_LABELS } from '@/constants/symptoms';
+import { formatAmount } from '@/lib/formatAmount';
 import { useEntitlement } from '@/context/EntitlementProvider';
-import { formatLocalDate, formatLocalTime, todayDateKey } from '@/lib/dateTime';
+import { formatLocalDate, formatLocalTime, localDateKey, parseDateKey, todayDateKey } from '@/lib/dateTime';
 
 const UPCOMING_PREVIEW_COUNT = 4;
 
@@ -54,6 +59,9 @@ export default function HomeScreen() {
   const { data: medications, isLoading: medicationsLoading } = useMedications(['active', 'paused']);
   const { data: reminders } = useUpcomingMedicationReminders();
   const { data: appointments } = useAppointments();
+  const { data: recentRecords } = useRecentTakenRecords();
+  const { data: symptoms } = useSymptoms();
+  const { data: weightRecords } = useWeightRecords();
 
   // Sampled into state each minute (not read via Date.now() during render) so the
   // "days until expiry" math below stays a pure function of state.
@@ -64,17 +72,6 @@ export default function HomeScreen() {
   }, []);
   const lifetimePrice = useLifetimePrice();
   const { showTrialCountdown, trialDaysLeft, isReadOnly } = useEntitlement();
-
-  // The gradient hero runs edge-to-edge under the status bar, so the bar's
-  // own text has to flip to light while this tab is focused, and back to
-  // the app-wide dark when it isn't.
-  const insets = useSafeAreaInsets();
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('light');
-      return () => setStatusBarStyle('dark');
-    }, []),
-  );
 
   const upcoming = useMemo<UpcomingEntry[]>(() => {
     const entries: UpcomingEntry[] = [];
@@ -152,50 +149,115 @@ export default function HomeScreen() {
   const attentionCount = upcoming.filter((e) => e.tone === 'warning').length;
   const greeting = greetingForHour(new Date(now).getHours());
 
+  const medicationById = new Map((medications ?? []).map((m) => [m.id, m]));
+  // Active treatments first; paused ones trail behind
+  const sortedMedications = [...(medications ?? [])].sort(
+    (a, b) => Number(a.status !== 'active') - Number(b.status !== 'active'),
+  );
+  const latest = recentRecords?.find((r) => medicationById.has(r.medicationId));
+  const latestMedication = latest ? medicationById.get(latest.medicationId) : undefined;
+  const latestDose = latest ? formatAmount(latest.amount, latest.amountUnit, latest.amountUnitCustom) : null;
+  const latestIsToday = latest ? localDateKey(latest.occurredLocal) === todayDateKey() : false;
+  const latestSymptom = symptoms?.[0];
+  const latestWeight = weightRecords?.[0];
+  const trialLabel = showTrialCountdown
+    ? trialDaysLeft === 0
+      ? 'Free trial ends today'
+      : `Free trial — ${trialDaysLeft} days left`
+    : null;
+
   const quickActions: QuickAction[] = [
-    { key: 'log', icon: 'water-outline', label: 'Log', onPress: () => router.push('/record/new'), primary: true },
+    { key: 'log', icon: 'create-outline', label: 'Log', onPress: () => router.push('/record/new'), primary: true },
     { key: 'symptom', icon: 'pulse-outline', label: 'Symptom', onPress: () => router.push('/symptom/new') },
-    { key: 'weight', icon: 'scale-outline', label: 'Weight', onPress: () => router.push('/weight/new') },
+    {
+      key: 'weight',
+      icon: 'scale-outline',
+      label: latestWeight ? `${latestWeight.weightKg} kg` : 'Weight',
+      onPress: () => router.push('/weight/new'),
+    },
     { key: 'more', icon: 'add', label: 'More', onPress: () => setQuickAddVisible(true) },
   ];
 
   return (
-    <Screen scroll padded={false} edges={['bottom']} contentStyle={styles.screenContent}>
-      <LinearGradient
-        colors={[colors.accent, colors.accentDeep]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
-      >
+    <Screen scroll padded={false} edges={[]} tinted={false} aboveTabBar contentStyle={styles.screenContent}>
+      <HeroHeader>
         <View style={styles.heroTopRow}>
-          <View>
-            <Text style={styles.heroGreeting}>{greeting}</Text>
-            <Text style={styles.heroSubtitle}>
-              {activeCount === 0
-                ? 'Nothing tracked yet'
-                : `${activeCount} active medication${activeCount === 1 ? '' : 's'}`}
+          <View style={styles.brandRow} accessible accessibilityLabel="Mediary">
+            <Image source={require('../../../assets/brand/mark-white.png')} style={styles.brandMark} />
+            <Image source={require('../../../assets/brand/wordmark-white.png')} style={styles.brandWordmark} />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add medication"
+            onPress={() => router.push('/medication/new')}
+            style={({ pressed }) => [styles.heroIconButton, pressed && { opacity: 0.7 }]}
+          >
+            <Ionicons name="add" size={22} color={colors.textOnAccent} />
+          </Pressable>
+        </View>
+
+        <Text style={styles.heroGreeting}>{greeting}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(app)/history')}
+          disabled={!latest}
+        >
+          {latest && latestMedication ? (
+            <Text style={styles.heroHeadline}>
+              {latestIsToday ? `${latestMedication.name} logged today` : `Last logged ${latestMedication.name}`}
+              {'\n'}
+              <Text style={styles.heroHeadlineSoft}>
+                {latestIsToday
+                  ? `at ${formatLocalTime(latest.occurredLocal)}`
+                  : `${formatLocalDate(latest.occurredLocal, 'EEE d MMM')}, ${formatLocalTime(latest.occurredLocal)}`}
+              </Text>
+              <Text style={styles.heroHeadlineChevron}> ›</Text>
             </Text>
+          ) : (
+            <Text style={styles.heroHeadline}>
+              {activeCount === 0 ? 'Nothing tracked yet' : 'No doses logged yet'}
+            </Text>
+          )}
+        </Pressable>
+
+        <View style={styles.heroPills}>
+          <View style={styles.heroPill}>
+            <View style={styles.heroPillDot} />
+            <Text style={styles.heroPillLabel}>{activeCount} Active</Text>
+          </View>
+          <View style={styles.heroPill}>
+            <Text style={styles.heroPillLabelMuted}>{upcoming.length} Upcoming</Text>
+          </View>
+          <View style={styles.heroPill}>
+            {attentionCount > 0 && <View style={[styles.heroPillDot, { backgroundColor: colors.warningSoft }]} />}
+            <Text style={styles.heroPillLabelMuted}>{attentionCount} Needs attention</Text>
           </View>
         </View>
-      </LinearGradient>
+      </HeroHeader>
 
-      <View style={styles.body}>
-        <Card style={styles.statsCard} elevated>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{activeCount}</Text>
-            <Text style={styles.statLabel}>Active</Text>
+      <HeroSheet>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!latestMedication}
+          onPress={() => latestMedication && router.push(`/medication/${latestMedication.id}`)}
+          style={styles.lastDose}
+        >
+          <View style={styles.lastDoseLabelRow}>
+            <Text style={styles.lastDoseLabel}>Last dose</Text>
+            {latestMedication && <Ionicons name="chevron-forward" size={15} color={colors.textSecondary} />}
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{upcoming.length}</Text>
-            <Text style={styles.statLabel}>Upcoming</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, attentionCount > 0 && { color: colors.warning }]}>{attentionCount}</Text>
-            <Text style={styles.statLabel}>Needs attention</Text>
-          </View>
-        </Card>
+          <Text style={styles.lastDoseValue}>{latestDose ?? '—'}</Text>
+          <Text style={styles.lastDoseMeta}>
+            {[
+              latest
+                ? `${latestIsToday ? 'Today' : formatLocalDate(latest.occurredLocal, 'EEE d MMM')}, ${formatLocalTime(latest.occurredLocal)}`
+                : 'No doses logged yet',
+              trialLabel,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
+        </Pressable>
 
         <View style={styles.quickActions}>
           {quickActions.map((action) => (
@@ -203,14 +265,14 @@ export default function HomeScreen() {
               key={action.key}
               onPress={action.onPress}
               disabled={action.primary && isReadOnly}
-              style={styles.quickAction}
-              accessibilityLabel={action.label}
+              style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={action.key === 'weight' ? 'Add weight' : action.label}
             >
-              <View style={[styles.quickActionIcon, action.primary && styles.quickActionIconPrimary]}>
+              <View style={[styles.quickActionIcon, action.key === 'symptom' && styles.quickActionIconTeal]}>
                 <Ionicons
                   name={action.icon}
                   size={22}
-                  color={action.primary ? colors.textOnAccent : colors.accentStrong}
+                  color={action.key === 'symptom' ? colors.secondaryAccent : colors.accent}
                 />
               </View>
               <Text style={styles.quickActionLabel}>{action.label}</Text>
@@ -218,16 +280,8 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {showTrialCountdown && (
-          <Card style={styles.trialCard}>
-            <Text style={typography.bodySecondary}>
-              {trialDaysLeft === 0 ? 'Your free trial ends today' : `${trialDaysLeft} days left in your free trial`}
-            </Text>
-          </Card>
-        )}
-
         {isReadOnly && (
-          <Card style={[styles.trialCard, { backgroundColor: colors.errorSoft }]}>
+          <Card style={[styles.readOnlyCard, { backgroundColor: colors.errorSoft, borderColor: colors.errorSoft }]}>
             <Text style={typography.cardTitle}>Your free trial has ended</Text>
             <Text style={[typography.bodySecondary, { marginTop: 2 }]}>
               Unlock Mediary for lifetime access — {lifetimePrice}
@@ -236,175 +290,400 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        <Section title="Upcoming & attention">
-        {upcoming.length === 0 ? (
-          <Text style={typography.bodySecondary}>Nothing coming up right now.</Text>
-        ) : (
-          <View style={styles.upcomingList}>
-            {visibleUpcoming.map((entry) => (
-              <Pressable key={entry.id} onPress={entry.onPress} style={styles.upcomingRow}>
-                <View
-                  style={[
-                    styles.upcomingIcon,
-                    { backgroundColor: entry.tone === 'warning' ? colors.warningSoft : colors.accentSoft },
+        <Section
+          title="Your medications"
+          action={
+            <Pressable onPress={() => router.push('/medication/new')} hitSlop={8} accessibilityRole="button">
+              <Text style={styles.sectionLink}>Add medication</Text>
+            </Pressable>
+          }
+        >
+          {medicationsLoading ? (
+            <LoadingState />
+          ) : !medications?.length ? (
+            <EmptyState
+              icon="water-outline"
+              title="No medications yet"
+              message="Add a medication or treatment to start recording."
+              actionLabel="Add medication"
+              onAction={() => router.push('/medication/new')}
+            />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.medScroller}
+              contentContainerStyle={styles.medScrollerContent}
+            >
+              {sortedMedications.map((medication) => {
+                const last = recentRecords?.find((r) => r.medicationId === medication.id);
+                const lastAmount = last ? formatAmount(last.amount, last.amountUnit, last.amountUnitCustom) : null;
+                const highlighted = medication.id === latestMedication?.id;
+                return (
+                  <Pressable
+                    key={medication.id}
+                    accessibilityRole="button"
+                    onPress={() => router.push(`/medication/${medication.id}`)}
+                    style={({ pressed }) => [styles.medCard, highlighted && styles.medCardOn, pressed && { opacity: 0.7 }]}
+                  >
+                    {highlighted && (
+                      <LinearGradient
+                        colors={['#EEF8FF', colors.surface]}
+                        style={StyleSheet.absoluteFill}
+                        pointerEvents="none"
+                      />
+                    )}
+                    <View style={styles.medCardTop}>
+                      <InitialAvatar name={medication.name} />
+                      {medication.status === 'active' && <View style={styles.medActiveDot} />}
+                    </View>
+                    <Text style={styles.medName} numberOfLines={1}>
+                      {medication.name}
+                    </Text>
+                    <Text style={styles.medMeta} numberOfLines={1}>
+                      {medication.status !== 'active'
+                        ? STATUS_LABELS[medication.status]
+                        : last
+                          ? [lastAmount, relativeDayLabel(last.occurredLocal)].filter(Boolean).join(' · ')
+                          : 'Not logged yet'}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add medication"
+                onPress={() => router.push('/medication/new')}
+                style={({ pressed }) => [styles.medCard, pressed && { opacity: 0.7 }]}
+              >
+                <InitialAvatar name="+" tone="muted" />
+                <Text style={styles.medName}>Add</Text>
+                <Text style={styles.medMeta}>New treatment</Text>
+              </Pressable>
+            </ScrollView>
+          )}
+        </Section>
+
+        {latestSymptom && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push(`/symptom/${latestSymptom.id}/edit`)}
+            style={({ pressed }) => [styles.symptomRow, pressed && { opacity: 0.6 }]}
+          >
+            <View style={styles.symptomIcon}>
+              <Ionicons name="pulse-outline" size={20} color={colors.secondaryAccent} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.symptomName} numberOfLines={1}>
+                {latestSymptom.name}
+              </Text>
+              <Text style={typography.caption}>
+                Latest symptom · {SEVERITY_LABELS[latestSymptom.severity]} ·{' '}
+                {localDateKey(latestSymptom.startLocal) === todayDateKey()
+                  ? formatLocalTime(latestSymptom.startLocal)
+                  : formatLocalDate(latestSymptom.startLocal, 'd MMM')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </Pressable>
+        )}
+
+        {upcoming.length > 0 && (
+          <Section title="Upcoming & attention">
+            <View style={styles.listCard}>
+              {visibleUpcoming.map((entry, index) => (
+                <Pressable
+                  key={entry.id}
+                  onPress={entry.onPress}
+                  style={({ pressed }) => [
+                    styles.upcomingRow,
+                    index > 0 && styles.rowDivider,
+                    pressed && { opacity: 0.6 },
                   ]}
                 >
-                  <Ionicons
-                    name={entry.icon}
-                    size={17}
-                    color={entry.tone === 'warning' ? colors.warning : colors.accentStrong}
-                  />
-                </View>
-                <View style={styles.upcomingText}>
-                  <Text style={typography.body} numberOfLines={1}>
-                    {entry.title}
-                  </Text>
-                  <Text style={typography.caption}>{entry.subtitle}</Text>
-                </View>
-              </Pressable>
-            ))}
-            {upcoming.length > UPCOMING_PREVIEW_COUNT && !showAllUpcoming && (
-              <TextButton label={`+${upcoming.length - UPCOMING_PREVIEW_COUNT} more`} onPress={() => setShowAllUpcoming(true)} />
-            )}
-          </View>
+                  <View
+                    style={[
+                      styles.upcomingIcon,
+                      { backgroundColor: entry.tone === 'warning' ? colors.warningSoft : colors.accentSoft },
+                    ]}
+                  >
+                    <Ionicons
+                      name={entry.icon}
+                      size={16}
+                      color={entry.tone === 'warning' ? colors.warning : colors.accent}
+                    />
+                  </View>
+                  <View style={styles.flex}>
+                    <Text style={typography.cardTitle} numberOfLines={1}>
+                      {entry.title}
+                    </Text>
+                    <Text style={typography.caption}>{entry.subtitle}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </Pressable>
+              ))}
+              {upcoming.length > UPCOMING_PREVIEW_COUNT && !showAllUpcoming && (
+                <TextButton
+                  label={`+${upcoming.length - UPCOMING_PREVIEW_COUNT} more`}
+                  onPress={() => setShowAllUpcoming(true)}
+                  style={styles.rowDivider}
+                />
+              )}
+            </View>
+          </Section>
         )}
-      </Section>
-
-      <Section title="Your medications" action={<TextButton label="Add medication" onPress={() => router.push('/medication/new')} />}>
-        {medicationsLoading ? (
-          <LoadingState />
-        ) : !medications?.length ? (
-          <EmptyState
-            icon="leaf-outline"
-            title="No medications yet"
-            message="Add a medication or treatment to start recording."
-            actionLabel="Add medication"
-            onAction={() => router.push('/medication/new')}
-          />
-        ) : (
-          <View>
-            {medications.map((medication) => (
-              <MedicationListItem
-                key={medication.id}
-                medication={medication}
-                onPress={() => router.push(`/medication/${medication.id}`)}
-              />
-            ))}
-          </View>
-        )}
-        </Section>
-      </View>
+      </HeroSheet>
 
       <QuickAddSheet visible={quickAddVisible} onClose={() => setQuickAddVisible(false)} />
     </Screen>
   );
 }
 
+/** "Today", "Yesterday", "3 days ago", "7 wks ago" — compact, for the medication cards. */
+function relativeDayLabel(local: string): string {
+  const days = Math.round(
+    (parseDateKey(todayDateKey()).getTime() - parseDateKey(localDateKey(local)).getTime()) / 86400000,
+  );
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 14) return `${days} days ago`;
+  return `${Math.floor(days / 7)} wks ago`;
+}
+
 const styles = StyleSheet.create({
   screenContent: {
     paddingHorizontal: 0,
   },
-  hero: {
-    // paddingTop is applied inline — it has to include the status-bar inset,
-    // since this gradient deliberately extends under it.
-    paddingBottom: spacing.xxl,
-    paddingHorizontal: spacing.lg,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+  flex: {
+    flex: 1,
   },
   heroTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    minHeight: 48,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandMark: {
+    width: 48,
+    height: 24,
+  },
+  brandWordmark: {
+    width: 88,
+    height: 21,
+  },
+  heroIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.onAccentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroGreeting: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    color: colors.textOnAccent,
-  },
-  heroSubtitle: {
+    fontFamily: fonts.regular,
     fontSize: 15,
     lineHeight: 20,
-    color: 'rgba(255,255,255,0.82)',
-    marginTop: spacing.xxs,
+    color: 'rgba(255,255,255,0.72)',
+    marginTop: spacing.md,
+    marginBottom: 6,
   },
-  body: {
-    paddingHorizontal: spacing.lg,
+  heroHeadline: {
+    fontFamily: fonts.serifMedium,
+    fontSize: 28,
+    lineHeight: 32,
+    letterSpacing: -0.5,
+    color: colors.textOnAccent,
   },
-  statsCard: {
+  heroHeadlineSoft: {
+    color: '#DBEAFE',
+  },
+  heroHeadlineChevron: {
+    color: 'rgba(255,255,255,0.5)',
+  },
+  heroPills: {
     flexDirection: 'row',
-    marginTop: -40,
-    backgroundColor: colors.surface,
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 18,
   },
-  statItem: {
-    flex: 1,
+  heroPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 30,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    backgroundColor: colors.onAccentSoft,
+  },
+  heroPillDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#86EFAC',
+  },
+  heroPillLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.textOnAccent,
+  },
+  heroPillLabelMuted: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  lastDose: {
     alignItems: 'center',
   },
-  statValue: {
-    fontSize: 22,
-    lineHeight: 27,
-    fontWeight: '700',
+  lastDoseLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lastDoseLabel: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  lastDoseValue: {
+    fontFamily: fonts.serif,
+    fontSize: 32,
+    lineHeight: 36,
+    letterSpacing: -0.6,
     color: colors.textPrimary,
-  },
-  statLabel: {
-    ...typography.caption,
     marginTop: 2,
-    textAlign: 'center',
   },
-  statDivider: {
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: colors.divider,
-    marginVertical: 2,
+  lastDoseMeta: {
+    ...typography.caption,
+    marginTop: 4,
+    textAlign: 'center',
   },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: spacing.lg,
+    paddingHorizontal: spacing.xxs,
   },
   quickAction: {
     alignItems: 'center',
-    gap: spacing.xxs,
-    width: 72,
+    gap: 6,
+    width: 76,
   },
   quickActionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickActionIconPrimary: {
-    backgroundColor: colors.accent,
+  quickActionIconTeal: {
+    backgroundColor: colors.secondaryAccentSoft,
   },
   quickActionLabel: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.textPrimary,
   },
-  trialCard: {
+  readOnlyCard: {
+    marginTop: spacing.lg,
+  },
+  sectionLink: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.textPrimary,
+    textDecorationLine: 'underline',
+  },
+  medScroller: {
+    marginHorizontal: -20,
+  },
+  medScrollerContent: {
+    gap: spacing.xs,
+    paddingHorizontal: 20,
+  },
+  medCard: {
+    width: 112,
+    height: 96,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+  },
+  medCardOn: {
+    borderWidth: 1.5,
+    borderColor: colors.accentBright,
+  },
+  medCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  medActiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.success,
+  },
+  medName: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.textPrimary,
+    marginTop: 'auto',
+  },
+  medMeta: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  symptomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    minHeight: 60,
     marginTop: spacing.md,
-    backgroundColor: colors.accentSoft,
   },
-  upcomingList: {
-    gap: 2,
+  symptomIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.secondaryAccentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  symptomName: {
+    fontFamily: fonts.medium,
+    fontSize: 17,
+    color: colors.textPrimary,
+  },
+  listCard: {
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    paddingHorizontal: 14,
+    paddingVertical: spacing.xxs,
+  },
+  rowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.dividerSoft,
   },
   upcomingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.xs,
+    minHeight: 60,
   },
   upcomingIcon: {
     width: 32,
     height: 32,
-    borderRadius: radius.md,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  upcomingText: {
-    flex: 1,
   },
 });

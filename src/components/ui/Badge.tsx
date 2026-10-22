@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 import type { MedicationStatus } from '@/constants/categories';
 import { STATUS_LABELS } from '@/constants/categories';
 
@@ -27,13 +27,14 @@ export function StatusBadge({ status }: { status: MedicationStatus }) {
 
 const styles = StyleSheet.create({
   base: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    height: 26,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
   label: {
+    fontFamily: fonts.semibold,
     fontSize: 12,
-    fontWeight: '600',
   },
 });

@@ -127,3 +127,15 @@ export async function fetchTreatmentRecord(id: string): Promise<TreatmentRecord>
   if (error) throw error;
   return mapTreatmentRecord(data);
 }
+
+/** Taken records across all medications, newest first — for the Home snapshot. */
+export async function fetchRecentTakenRecords(limit = 60): Promise<TreatmentRecord[]> {
+  const { data, error } = await supabase
+    .from('treatment_records')
+    .select('*')
+    .eq('taken', true)
+    .order('occurred_utc', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data.map(mapTreatmentRecord);
+}

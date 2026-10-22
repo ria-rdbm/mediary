@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, Text, ActivityIndicator, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing, touchTarget } from '@/theme';
+import { colors, fonts, radius, spacing, touchTarget, controlHeight } from '@/theme';
 
 interface BaseButtonProps {
   label: string;
@@ -31,15 +31,31 @@ export function PrimaryButton({ label, onPress, disabled, loading, style, icon }
         <ActivityIndicator color={colors.textOnAccent} />
       ) : (
         <>
-          {icon && <Ionicons name={icon} size={18} color={colors.textOnAccent} style={styles.icon} />}
-          <Text style={styles.primaryLabel}>{label}</Text>
+          {icon && (
+            <Ionicons
+              name={icon}
+              size={18}
+              color={disabled ? colors.disabledText : colors.textOnAccent}
+              style={styles.icon}
+            />
+          )}
+          <Text style={[styles.primaryLabel, disabled && styles.disabledLabel]}>{label}</Text>
         </>
       )}
     </Pressable>
   );
 }
 
-export function SecondaryButton({ label, onPress, disabled, loading, style, icon }: BaseButtonProps) {
+export function SecondaryButton({
+  label,
+  onPress,
+  disabled,
+  loading,
+  style,
+  icon,
+  tone = 'soft',
+}: BaseButtonProps & { tone?: 'soft' | 'outline' }) {
+  const fg = tone === 'outline' ? colors.textPrimary : colors.accent;
   return (
     <Pressable
       accessibilityRole="button"
@@ -48,18 +64,18 @@ export function SecondaryButton({ label, onPress, disabled, loading, style, icon
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
-        styles.secondary,
+        tone === 'outline' ? styles.outline : styles.secondary,
         (disabled || loading) && styles.disabledSecondary,
         pressed && !disabled && !loading && styles.pressedSecondary,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.accentStrong} />
+        <ActivityIndicator color={fg} />
       ) : (
         <>
-          {icon && <Ionicons name={icon} size={18} color={colors.accentStrong} style={styles.icon} />}
-          <Text style={styles.secondaryLabel}>{label}</Text>
+          {icon && <Ionicons name={icon} size={18} color={fg} style={styles.icon} />}
+          <Text style={[styles.secondaryLabel, { color: fg }, disabled && styles.disabledLabel]}>{label}</Text>
         </>
       )}
     </Pressable>
@@ -72,7 +88,7 @@ export function TextButton({
   disabled,
   style,
   tone = 'default',
-}: Omit<BaseButtonProps, 'loading' | 'icon'> & { tone?: 'default' | 'destructive' }) {
+}: Omit<BaseButtonProps, 'loading' | 'icon'> & { tone?: 'default' | 'muted' | 'destructive' }) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -85,6 +101,7 @@ export function TextButton({
         style={[
           styles.textButtonLabel,
           tone === 'destructive' && { color: colors.error },
+          tone === 'muted' && { color: colors.textPrimary, fontFamily: fonts.medium },
           disabled && { color: colors.disabledText },
         ]}
       >
@@ -130,7 +147,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: touchTarget.minHeight,
+    minHeight: controlHeight.button,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
   },
@@ -139,25 +156,30 @@ const styles = StyleSheet.create({
   },
   primaryLabel: {
     color: colors.textOnAccent,
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
+    fontSize: 17,
   },
   secondary: {
     backgroundColor: colors.accentSoft,
+  },
+  outline: {
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.accentSoftBorder,
+    borderColor: colors.divider,
   },
   secondaryLabel: {
-    color: colors.accentStrong,
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.accent,
+    fontFamily: fonts.semibold,
+    fontSize: 17,
   },
   disabled: {
     backgroundColor: colors.disabled,
   },
   disabledSecondary: {
-    backgroundColor: colors.surfaceSecondary,
-    borderColor: colors.divider,
+    backgroundColor: colors.disabled,
+  },
+  disabledLabel: {
+    color: colors.disabledText,
   },
   pressed: {
     opacity: 0.85,
@@ -176,8 +198,8 @@ const styles = StyleSheet.create({
   },
   textButtonLabel: {
     color: colors.textLink,
+    fontFamily: fonts.semibold,
     fontSize: 15,
-    fontWeight: '600',
   },
   iconButton: {
     minHeight: touchTarget.minHeight,

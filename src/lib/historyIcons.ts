@@ -16,11 +16,30 @@ export const HISTORY_ICONS: Record<HistoryRecordType, IconName> = {
 
 export const HISTORY_COLORS: Record<HistoryRecordType, string> = {
   treatment: colors.accent,
-  symptom: colors.warning,
+  symptom: colors.secondaryAccent,
   weight: colors.info,
-  note: colors.secondaryAccent,
+  note: colors.accentStrong,
   appointment: colors.accentStrong,
   stock: colors.textMuted,
+};
+
+export const HISTORY_TYPE_LABELS: Record<HistoryRecordType, string> = {
+  treatment: 'Dose',
+  symptom: 'Symptom',
+  weight: 'Weight',
+  note: 'Note',
+  appointment: 'Appointment',
+  stock: 'Stock',
+};
+
+// Background of the timeline icon puck — symptoms get the teal tint
+export const HISTORY_ICON_BACKGROUNDS: Record<HistoryRecordType, string> = {
+  treatment: colors.accentSoft,
+  symptom: colors.secondaryAccentSoft,
+  weight: colors.infoSoft,
+  note: colors.accentSoft,
+  appointment: colors.accentSoft,
+  stock: colors.surfaceSecondary,
 };
 
 export function historyItemRoute(type: HistoryRecordType, id: string): string {

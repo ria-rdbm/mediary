@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, Image, StyleSheet, Platform } from 'react-native';
 import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
-import { PrimaryButton } from '@/components/ui/Button';
-import { colors, typography, spacing, radius } from '@/theme';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { colors, fonts, typography, spacing, radius, controlHeight } from '@/theme';
 import { useAuth, isGoogleSignInCancelled } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -91,12 +90,10 @@ export default function SignInScreen() {
             style={styles.devSkipTop}
           />
         )}
-        <View style={styles.brand}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="leaf" size={30} color={colors.accentStrong} />
-          </View>
-          <Text style={typography.display}>Mediary</Text>
-          <Text style={[typography.bodySecondary, styles.subtitle]}>Injection & Treatment Tracker</Text>
+        <View style={styles.brand} accessible accessibilityLabel="Mediary — Injection & Treatment Tracker">
+          <Image source={require('../../../assets/brand/mark.png')} style={styles.mark} />
+          <Image source={require('../../../assets/brand/wordmark.png')} style={styles.wordmark} />
+          <Text style={[typography.body, styles.subtitle]}>Injection & Treatment Tracker</Text>
         </View>
 
         <View style={styles.buttons}>
@@ -109,13 +106,14 @@ export default function SignInScreen() {
               onPress={handleApple}
             />
           )}
-          <PrimaryButton
+          <SecondaryButton
             label="Continue with Google"
             icon="logo-google"
             onPress={handleGoogle}
             loading={loading === 'google'}
             disabled={loading !== null}
             style={styles.googleButton}
+            tone="outline"
           />
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
@@ -145,18 +143,20 @@ const styles = StyleSheet.create({
   },
   brand: {
     alignItems: 'center',
+    marginTop: 80,
   },
-  logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+  mark: {
+    width: 132,
+    height: 67,
+  },
+  wordmark: {
+    width: 168,
+    height: 40,
+    marginTop: 22,
   },
   subtitle: {
-    marginTop: spacing.xxs,
+    marginTop: spacing.sm,
+    color: colors.textMuted,
   },
   buttons: {
     gap: spacing.sm,
@@ -167,10 +167,10 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '100%',
-    height: 50,
+    height: controlHeight.button,
   },
   googleButton: {
-    backgroundColor: colors.textPrimary,
+    borderRadius: radius.pill,
   },
   error: {
     ...typography.caption,
@@ -180,10 +180,12 @@ const styles = StyleSheet.create({
   },
   legal: {
     ...typography.caption,
+    lineHeight: 19,
     textAlign: 'center',
+    paddingHorizontal: spacing.md,
   },
   legalLink: {
     color: colors.textLink,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
   },
 });

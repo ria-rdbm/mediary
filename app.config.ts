@@ -11,7 +11,7 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
-  primaryColor: '#8BA893',
+  primaryColor: '#1D4ED8',
   ios: {
     bundleIdentifier: BUNDLE_ID,
     supportsTablet: true,
@@ -26,7 +26,7 @@ const config: ExpoConfig = {
   android: {
     package: BUNDLE_ID,
     adaptiveIcon: {
-      backgroundColor: '#F7F3EC',
+      backgroundColor: '#F5FBFF',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
@@ -41,7 +41,10 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-font',
-    'expo-splash-screen',
+    [
+      'expo-splash-screen',
+      { image: './assets/splash-icon.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#F5FBFF' },
+    ],
     'expo-secure-store',
     'expo-apple-authentication',
     [
@@ -57,7 +60,7 @@ const config: ExpoConfig = {
         // TODO: design a proper monochrome Android notification icon and
         // point `icon` at it before release — Android silently falls back
         // to the app icon otherwise, which is a worse look in the status bar.
-        color: '#8BA893',
+        color: '#1D4ED8',
       },
     ],
     '@react-native-community/datetimepicker',

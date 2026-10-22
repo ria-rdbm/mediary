@@ -14,4 +14,6 @@ export { ConfirmationDialog } from './ConfirmationDialog';
 export { BottomSheet } from './BottomSheet';
 export { ListRow } from './ListRow';
 export { TimelineRow } from './TimelineRow';
+export type { TimelineTag } from './TimelineRow';
 export { SegmentedControl } from './SegmentedControl';
+export { Chip } from './Chip';

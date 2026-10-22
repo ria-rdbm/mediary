@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native';
-import { colors, typography, spacing, radius } from '@/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography } from '@/theme';
+import { fieldStyles } from './fieldStyles';
 
 interface InputProps extends TextInputProps {
   label?: string;
   helperText?: string;
   errorText?: string;
   required?: boolean;
+  /** Optional leading icon, shown in a white puck inside the field. */
+  icon?: keyof typeof Ionicons.glyphMap;
   rightAccessory?: React.ReactNode;
   containerStyle?: ViewStyle;
 }
@@ -16,9 +20,11 @@ export function Input({
   helperText,
   errorText,
   required,
+  icon,
   rightAccessory,
   style,
   containerStyle,
+  multiline,
   onFocus,
   onBlur,
   ...rest
@@ -26,23 +32,30 @@ export function Input({
   const [focused, setFocused] = useState(false);
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[fieldStyles.container, containerStyle]}>
       {label && (
-        <Text style={styles.label}>
+        <Text style={fieldStyles.label}>
           {label}
-          {required && <Text style={{ color: colors.error }}> *</Text>}
+          {required && <Text style={fieldStyles.required}> *</Text>}
         </Text>
       )}
       <View
         style={[
-          styles.inputRow,
-          focused && styles.inputRowFocused,
-          errorText && styles.inputRowError,
+          fieldStyles.field,
+          multiline && fieldStyles.fieldMultiline,
+          focused && fieldStyles.fieldFocused,
+          errorText && fieldStyles.fieldError,
         ]}
       >
+        {icon && (
+          <View style={fieldStyles.iconPuck}>
+            <Ionicons name={icon} size={16} color={colors.accent} />
+          </View>
+        )}
         <TextInput
-          style={[styles.input, style]}
-          placeholderTextColor={colors.textMuted}
+          style={[styles.input, multiline && styles.inputMultiline, style]}
+          placeholderTextColor={colors.textPlaceholder}
+          multiline={multiline}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
@@ -56,53 +69,26 @@ export function Input({
         {rightAccessory}
       </View>
       {errorText ? (
-        <Text style={styles.errorText}>{errorText}</Text>
+        <Text style={fieldStyles.errorText}>{errorText}</Text>
       ) : helperText ? (
-        <Text style={styles.helperText}>{helperText}</Text>
+        <Text style={fieldStyles.helperText}>{helperText}</Text>
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    paddingHorizontal: spacing.sm,
-  },
-  inputRowFocused: {
-    borderColor: colors.accent,
-  },
-  inputRowError: {
-    borderColor: colors.error,
-  },
   input: {
+    // No lineHeight: on iOS it shifts single-line TextInput text off-centre.
+    fontFamily: typography.body.fontFamily,
+    fontSize: typography.body.fontSize,
+    color: typography.body.color,
     flex: 1,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    color: colors.textPrimary,
     minHeight: 44,
+    paddingVertical: 0,
   },
-  helperText: {
-    ...typography.caption,
-    marginTop: spacing.xxs,
-  },
-  errorText: {
-    ...typography.caption,
-    color: colors.error,
-    marginTop: spacing.xxs,
+  inputMultiline: {
+    minHeight: 66,
+    textAlignVertical: 'top',
   },
 });

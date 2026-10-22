@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/ui/Screen';
 import { TextButton } from '@/components/ui/Button';
 import { LoadingState, EmptyState } from '@/components/ui/States';
 import { WeightChart } from '@/components/composed/WeightChart';
-import { colors, typography, spacing, radius } from '@/theme';
+import { colors, typography, spacing } from '@/theme';
 import { useHealthSummary } from '@/hooks/useHealthSummary';
 import { formatLocalDate, formatLocalTime } from '@/lib/dateTime';
 import { STATUS_LABELS } from '@/constants/categories';
@@ -102,21 +103,26 @@ export default function HealthSummaryViewScreen() {
   const medicationIds = params.medicationIds?.split(',').filter(Boolean) ?? [];
   const includeWeight = params.includeWeight === '1';
 
+  // This route is a fullScreenModal, where SafeAreaView reports a zero top
+  // inset on iOS — so pad the header from the provider's device insets.
+  const insets = useSafeAreaInsets();
   const { data, isLoading } = useHealthSummary(medicationIds, params.startDateKey, params.endDateKey, includeWeight);
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={styles.header}>
+    <Screen edges={['bottom']} padded={false} tinted={false}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TextButton label="Back" onPress={() => router.back()} />
-        <Text style={typography.cardTitle}>Health Summary</Text>
+        <Text style={typography.headerTitle}>Health Summary</Text>
         <TextButton label="Done" onPress={() => router.dismissTo('/(app)/health-summary')} />
       </View>
 
       {isLoading ? (
         <LoadingState />
       ) : (
-        <Screen scroll padded={false} edges={[]}>
-          <View style={styles.content}>
+        // A plain ScrollView (not a nested Screen) so the content scrolls in
+        // its own clipped area below the fixed header.
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View>
             <Text style={styles.rangeText}>
               {formatLocalDate(`${params.startDateKey}T00:00:00`)} – {formatLocalDate(`${params.endDateKey}T00:00:00`)}
             </Text>
@@ -137,7 +143,7 @@ export default function HealthSummaryViewScreen() {
               <EmptyState icon="document-text-outline" title="No data for this period" />
             )}
           </View>
-        </Screen>
+        </ScrollView>
       )}
     </Screen>
   );
@@ -148,13 +154,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingBottom: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
+    zIndex: 1,
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: colors.lightBackground,
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 20,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
@@ -164,9 +176,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   medicationSection: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.divider,
     padding: spacing.md,
   },
   medicationHeader: {

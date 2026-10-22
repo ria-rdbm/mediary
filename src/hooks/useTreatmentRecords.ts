@@ -9,6 +9,15 @@ export function useTreatmentRecordsForMedication(medicationId: string | undefine
   });
 }
 
+// Keyed under 'history' so every record mutation (which invalidates
+// ['history']) refreshes it without another invalidation call.
+export function useRecentTakenRecords() {
+  return useQuery({
+    queryKey: ['history', 'recent-taken-records'],
+    queryFn: () => recordsService.fetchRecentTakenRecords(),
+  });
+}
+
 export function useTreatmentRecord(id: string | undefined) {
   return useQuery({
     queryKey: ['treatment-record', id],

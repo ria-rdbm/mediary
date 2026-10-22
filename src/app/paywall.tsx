@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
 import { PrimaryButton, TextButton } from '@/components/ui/Button';
-import { colors, typography, spacing, radius } from '@/theme';
+import { HeroHeader, HeroSheet } from '@/components/composed/HeroLayout';
+import { colors, fonts, typography, spacing } from '@/theme';
 import { purchaseLifetimeAccess, restorePurchases, hasLifetimeEntitlement } from '@/lib/revenuecat';
 import { syncEntitlement } from '@/services/account';
 import { useLifetimePrice } from '@/hooks/useLifetimePrice';
 import { useEntitlement } from '@/context/EntitlementProvider';
 
-const BENEFITS = [
-  'Unlimited medications & treatments',
-  'Stock tracking with batches & reminders',
-  'Full history, calendar & Summary',
-  'No ads, no subscription — pay once',
+const BENEFITS: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+  { icon: 'water-outline', label: 'Unlimited medications & treatments' },
+  { icon: 'cube-outline', label: 'Stock tracking with batches & reminders' },
+  { icon: 'calendar-outline', label: 'Full history, calendar & Summary' },
+  { icon: 'star-outline', label: 'No ads, no subscription — pay once' },
 ];
 
 export default function PaywallScreen() {
@@ -70,89 +71,164 @@ export default function PaywallScreen() {
   };
 
   return (
-    <Screen>
-      <View style={styles.content}>
-        <View style={styles.iconCircle}>
-          <Ionicons name="leaf" size={26} color={colors.accentStrong} />
+    <Screen scroll padded={false} edges={['bottom']} tinted={false}>
+      <HeroHeader style={styles.hero}>
+        <View style={styles.topRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            onPress={() => router.back()}
+            style={styles.closeButton}
+            hitSlop={6}
+          >
+            <Ionicons name="arrow-undo-outline" size={20} color={colors.textOnAccent} />
+          </Pressable>
+          <View style={styles.brandRow} accessible accessibilityLabel="Mediary">
+            <Image source={require('../../assets/brand/mark-white.png')} style={styles.brandMark} />
+            <Image source={require('../../assets/brand/wordmark-white.png')} style={styles.brandWordmark} />
+          </View>
+          <View style={styles.closeButtonSpacer} />
         </View>
-        <Text style={typography.screenTitle}>Lifetime Access</Text>
-        <Text style={[typography.bodySecondary, styles.subtitle]}>
-          One payment. No subscription. No ads.
-        </Text>
+
+        <Text style={styles.title}>Lifetime Access</Text>
+        <Text style={styles.subtitle}>One payment. No subscription. No ads.</Text>
 
         <View style={styles.benefits}>
           {BENEFITS.map((benefit) => (
-            <View key={benefit} style={styles.benefitRow}>
-              <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
-              <Text style={[typography.body, styles.benefitText]}>{benefit}</Text>
+            <View key={benefit.label} style={styles.benefitRow}>
+              <View style={styles.benefitIcon}>
+                <Ionicons name={benefit.icon} size={15} color={colors.textOnAccent} />
+              </View>
+              <Text style={styles.benefitText}>{benefit.label}</Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.priceCard}>
-          <Text style={typography.display}>{price}</Text>
-          <Text style={typography.caption}>One-time purchase</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.price}>{price}</Text>
+          <View style={styles.priceTag}>
+            <Text style={styles.priceTagLabel}>One-time purchase</Text>
+          </View>
         </View>
+      </HeroHeader>
 
+      <HeroSheet style={styles.sheet}>
         {error && <Text style={styles.error}>{error}</Text>}
-      </View>
-
-      <View style={styles.actions}>
         <PrimaryButton label="Unlock Lifetime Access" onPress={handlePurchase} loading={purchasing} />
         <TextButton label="Restore Purchase" onPress={handleRestore} disabled={restoring} />
-        <TextButton label="Not now" onPress={() => router.back()} />
-      </View>
+        <TextButton label="Not now" onPress={() => router.back()} style={styles.notNow} tone="muted" />
+      </HeroSheet>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: spacing.xl,
+  hero: {
+    paddingBottom: 34 + spacing.xl,
   },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accentSoft,
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 48,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.onAccentSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+  },
+  closeButtonSpacer: {
+    width: 40,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brandMark: {
+    width: 44,
+    height: 22,
+  },
+  brandWordmark: {
+    width: 80,
+    height: 19,
+  },
+  title: {
+    ...typography.display,
+    color: colors.textOnAccent,
+    marginTop: spacing.lg,
   },
   subtitle: {
+    ...typography.bodySecondary,
+    color: 'rgba(255,255,255,0.8)',
     marginTop: spacing.xxs,
-    marginBottom: spacing.lg,
   },
   benefits: {
-    width: '100%',
-    gap: spacing.sm,
+    gap: spacing.xs,
+    marginTop: spacing.lg,
   },
   benefitRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    minHeight: 50,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 16,
+    backgroundColor: colors.onAccentSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  benefitIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   benefitText: {
     flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.textOnAccent,
   },
-  priceCard: {
-    marginTop: spacing.xl,
+  priceRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+  },
+  price: {
+    ...typography.display,
+    color: colors.textOnAccent,
+  },
+  priceTag: {
+    height: 26,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    borderRadius: 13,
+    backgroundColor: colors.onAccentSoft,
+  },
+  priceTagLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    color: colors.textOnAccent,
+  },
+  sheet: {
+    paddingTop: spacing.lg,
+    gap: spacing.xxs,
   },
   error: {
     ...typography.caption,
     color: colors.error,
     textAlign: 'center',
-    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
-  actions: {
-    gap: spacing.xs,
-    paddingBottom: spacing.md,
+  notNow: {
+    marginBottom: spacing.sm,
   },
 });

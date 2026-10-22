@@ -7,14 +7,16 @@ interface SectionProps {
   action?: React.ReactNode;
   children: React.ReactNode;
   spacingTop?: keyof typeof spacing;
+  /** 'label' renders the small form-field label instead of a serif heading — for groups inside forms. */
+  variant?: 'title' | 'label';
 }
 
-export function Section({ title, action, children, spacingTop = 'lg' }: SectionProps) {
+export function Section({ title, action, children, spacingTop = 'lg', variant = 'title' }: SectionProps) {
   return (
     <View style={{ marginTop: spacing[spacingTop] }}>
       {title && (
         <View style={styles.headerRow}>
-          <Text style={typography.sectionTitle}>{title}</Text>
+          <Text style={variant === 'label' ? styles.label : typography.sectionTitle}>{title}</Text>
           {action}
         </View>
       )}
@@ -29,5 +31,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
+  },
+  label: {
+    ...typography.label,
+    marginLeft: spacing.xxs,
   },
 });

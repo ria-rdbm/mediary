@@ -136,10 +136,9 @@ const styles = StyleSheet.create({
   title: { marginTop: spacing.lg },
   subtitle: { marginTop: spacing.xxs, marginBottom: spacing.lg },
   sectionLabel: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
+    ...typography.label,
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xxs,
   },
   reminderSection: {
     marginTop: spacing.sm,

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet, Alert } from 'react-native';
+import { StyleSheet, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { Section } from '@/components/ui/Section';
@@ -12,8 +11,9 @@ import { PrimaryButton, TextButton } from '@/components/ui/Button';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { LoadingState } from '@/components/ui/States';
 import { AmountUnitField } from '@/components/composed/AmountUnitField';
+import { ColorSwatchPicker } from '@/components/composed/ColorSwatchPicker';
 import type { DoseUnit } from '@/constants/units';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 import { useMedication, useUpdateMedication, useDeleteMedication } from '@/hooks/useMedications';
 import { HasHistoryError } from '@/services/medications';
 import { fetchRemindersForMedication } from '@/services/reminders';
@@ -116,21 +116,11 @@ export default function EditMedicationScreen() {
 
       <Input label="Name" value={name} onChangeText={setName} required />
 
-      <Section title="Colour" spacingTop="md">
-        <View style={styles.colorRow}>
-          {colors.medicationPalette.map((paletteColor) => (
-            <Pressable
-              key={paletteColor}
-              onPress={() => setColor(paletteColor)}
-              style={[styles.colorSwatch, { backgroundColor: paletteColor }]}
-            >
-              {color === paletteColor && <Ionicons name="checkmark" size={16} color={colors.textOnAccent} />}
-            </Pressable>
-          ))}
-        </View>
+      <Section title="Colour" spacingTop="md" variant="label">
+        <ColorSwatchPicker value={color} onChange={setColor} />
       </Section>
 
-      <Section title="Default amount (optional)" spacingTop="md">
+      <Section title="Default amount (optional)" spacingTop="md" variant="label">
         <AmountUnitField
           amount={amount}
           onAmountChange={setAmount}
@@ -141,7 +131,7 @@ export default function EditMedicationScreen() {
         />
       </Section>
 
-      <Section title="Default provider / clinic" spacingTop="md">
+      <Section title="Default provider / clinic" spacingTop="md" variant="label">
         <Select
           value={defaultProviderId}
           placeholder="None"
@@ -190,18 +180,6 @@ export default function EditMedicationScreen() {
 }
 
 const styles = StyleSheet.create({
-  colorRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    flexWrap: 'wrap',
-  },
-  colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   saveButton: {
     marginTop: spacing.lg,
   },

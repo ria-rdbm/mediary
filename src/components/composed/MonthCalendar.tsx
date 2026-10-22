@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '@/theme';
+import { colors, fonts, typography, spacing, radius } from '@/theme';
 import { todayDateKey } from '@/lib/dateTime';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -48,20 +48,26 @@ export function MonthCalendar({
   const monthLabel = new Date(year, month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <View>
+    <View style={styles.card}>
       <View style={styles.headerRow}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Previous month"
           onPress={() => onChangeMonth(month === 0 ? year - 1 : year, month === 0 ? 11 : month - 1)}
           hitSlop={8}
+          style={styles.monthButton}
         >
-          <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
+          <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
         </Pressable>
-        <Text style={typography.cardTitle}>{monthLabel}</Text>
+        <Text style={styles.monthLabel}>{monthLabel}</Text>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Next month"
           onPress={() => onChangeMonth(month === 11 ? year + 1 : year, month === 11 ? 0 : month + 1)}
           hitSlop={8}
+          style={styles.monthButton}
         >
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={18} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -83,11 +89,8 @@ export function MonthCalendar({
             const dayNumber = Number(dateKey.slice(-2));
 
             return (
-              <Pressable
-                key={di}
-                style={[styles.dayCell, isSelected && styles.dayCellSelected]}
-                onPress={() => onSelectDate(dateKey)}
-              >
+              <Pressable key={di} style={styles.dayCell} onPress={() => onSelectDate(dateKey)}>
+                {isSelected && <View style={styles.selectedDisc} />}
                 <Text
                   style={[
                     styles.dayText,
@@ -108,11 +111,30 @@ export function MonthCalendar({
 }
 
 const styles = StyleSheet.create({
+  card: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+    padding: spacing.sm,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
+  },
+  monthButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthLabel: {
+    ...typography.sectionTitle,
+    fontSize: 18,
   },
   weekdayRow: {
     flexDirection: 'row',
@@ -131,9 +153,12 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
   },
-  dayCellSelected: {
+  selectedDisc: {
+    position: 'absolute',
+    width: '78%',
+    aspectRatio: 1,
+    borderRadius: radius.pill,
     backgroundColor: colors.accent,
   },
   dayText: {
@@ -142,11 +167,11 @@ const styles = StyleSheet.create({
   },
   dayTextSelected: {
     color: colors.textOnAccent,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
   },
   dayTextToday: {
-    color: colors.accentStrong,
-    fontWeight: '700',
+    color: colors.accent,
+    fontFamily: fonts.semibold,
   },
   dot: {
     position: 'absolute',

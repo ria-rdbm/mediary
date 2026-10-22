@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { colors, typography, spacing, touchTarget } from '@/theme';
+import { colors, fonts, typography, spacing, touchTarget } from '@/theme';
 
 interface HeaderProps {
   title?: string;
@@ -25,12 +25,12 @@ export function Header({ title, onBack, showBack = true, rightLabel, onRightPres
             hitSlop={8}
             style={styles.backButton}
           >
-            <Ionicons name="chevron-back" size={26} color={colors.textPrimary} />
+            <Ionicons name="arrow-undo-outline" size={22} color={colors.textPrimary} />
           </Pressable>
         )}
       </View>
       {title ? (
-        <Text style={[typography.sectionTitle, styles.title]} numberOfLines={1}>
+        <Text style={[typography.headerTitle, styles.title]} numberOfLines={1}>
           {title}
         </Text>
       ) : (
@@ -47,7 +47,7 @@ export function Header({ title, onBack, showBack = true, rightLabel, onRightPres
             <Text
               style={[
                 typography.body,
-                { color: rightDisabled ? colors.disabledText : colors.textLink, fontWeight: '600' },
+                { color: rightDisabled ? colors.disabledText : colors.textLink, fontFamily: fonts.semibold },
               ]}
             >
               {rightLabel}

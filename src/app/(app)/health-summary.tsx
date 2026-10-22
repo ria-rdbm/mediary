@@ -7,9 +7,12 @@ import { PrimaryButton } from '@/components/ui/Button';
 import { Toggle } from '@/components/ui/Toggle';
 import { DatePickerField } from '@/components/ui/DateTimeFields';
 import { EmptyState, LoadingState } from '@/components/ui/States';
-import { colors, typography, spacing, radius } from '@/theme';
+import { Chip } from '@/components/ui/Chip';
+import { HeroHeader, HeroSheet } from '@/components/composed/HeroLayout';
+import { colors, typography, spacing } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
-import { CATEGORY_ICONS, CATEGORY_DEFAULT_COLOR_INDEX } from '@/constants/categories';
+import { STATUS_LABELS } from '@/constants/categories';
+import { InitialAvatar } from '@/components/ui/InitialAvatar';
 import { parseDateKey, todayDateKey } from '@/lib/dateTime';
 
 type Period = '30d' | '3m' | '6m' | 'custom';
@@ -65,11 +68,15 @@ export default function HealthSummarySelectionScreen() {
   };
 
   return (
-    <Screen scroll>
-      <Text style={[typography.screenTitle, styles.title]}>Summary</Text>
-      <Text style={[typography.bodySecondary, styles.subtitle]}>
-        Choose what to include, then view a clean summary you can show your healthcare professional.
-      </Text>
+    <Screen scroll padded={false} edges={[]} tinted={false} aboveTabBar>
+      <HeroHeader>
+        <Text style={styles.title}>Summary</Text>
+        <Text style={styles.subtitle}>
+          Choose what to include, then view a clean summary you can show your healthcare professional.
+        </Text>
+      </HeroHeader>
+
+      <HeroSheet>
 
       <Text style={styles.sectionLabel}>Medication / Treatment</Text>
       {isLoading ? (
@@ -80,8 +87,6 @@ export default function HealthSummarySelectionScreen() {
         <View style={styles.medList}>
           {medications.map((medication) => {
             const active = selectedIds.includes(medication.id);
-            const accentColor =
-              medication.color ?? colors.medicationPalette[CATEGORY_DEFAULT_COLOR_INDEX[medication.category]];
             return (
               <Pressable
                 key={medication.id}
@@ -90,11 +95,16 @@ export default function HealthSummarySelectionScreen() {
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: active }}
               >
-                <View style={[styles.iconCircle, { backgroundColor: `${accentColor}22` }]}>
-                  <Ionicons name={CATEGORY_ICONS[medication.category]} size={16} color={accentColor} />
+                <InitialAvatar name={medication.name} size={40} />
+                <View style={styles.medName}>
+                  <Text style={typography.cardTitle} numberOfLines={1}>
+                    {medication.name}
+                  </Text>
+                  <Text style={typography.caption}>{STATUS_LABELS[medication.status]}</Text>
                 </View>
-                <Text style={typography.body}>{medication.name}</Text>
-                {active && <Ionicons name="checkmark-circle" size={18} color={colors.accent} style={styles.check} />}
+                <View style={[styles.radio, active && styles.radioOn]}>
+                  {active && <Ionicons name="checkmark" size={14} color={colors.textOnAccent} />}
+                </View>
               </Pressable>
             );
           })}
@@ -104,15 +114,12 @@ export default function HealthSummarySelectionScreen() {
       <Text style={styles.sectionLabel}>Period</Text>
       <View style={styles.periodList}>
         {PERIOD_OPTIONS.map((option) => (
-          <Pressable
+          <Chip
             key={option.value}
-            style={[styles.periodChip, period === option.value && styles.periodChipActive]}
+            label={option.label}
+            selected={period === option.value}
             onPress={() => setPeriod(option.value)}
-          >
-            <Text style={[styles.periodLabel, period === option.value && styles.periodLabelActive]}>
-              {option.label}
-            </Text>
-          </Pressable>
+          />
         ))}
       </View>
 
@@ -138,19 +145,26 @@ export default function HealthSummarySelectionScreen() {
         disabled={selectedIds.length === 0 || invalidRange}
         style={styles.viewButton}
       />
+      </HeroSheet>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { marginTop: spacing.sm },
-  subtitle: { marginTop: spacing.xxs, marginBottom: spacing.lg },
-  sectionLabel: {
+  title: {
+    ...typography.display,
+    color: colors.textOnAccent,
+    marginTop: spacing.lg,
+  },
+  subtitle: {
     ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
+    color: 'rgba(255,255,255,0.82)',
+    marginTop: spacing.xs,
+  },
+  sectionLabel: {
+    ...typography.label,
+    marginBottom: spacing.sm,
+    marginTop: spacing.md,
   },
   customRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   customField: { flex: 1 },
@@ -160,45 +174,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radius.md,
+    minHeight: 72,
+    paddingHorizontal: spacing.md,
+    borderRadius: 22,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.divider,
   },
   medRowActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSoft,
+    borderColor: colors.accentBright,
+    borderWidth: 1.5,
+    backgroundColor: colors.lightBackground,
   },
-  iconCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.sm,
+  medName: { flex: 1 },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.dividerStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  check: { marginLeft: 'auto' },
+  radioOn: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent,
+  },
   periodList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
-  },
-  periodChip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceSecondary,
-  },
-  periodChipActive: {
-    backgroundColor: colors.accent,
-  },
-  periodLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  periodLabelActive: {
-    color: colors.textOnAccent,
   },
   toggleRow: {
     marginTop: spacing.md,

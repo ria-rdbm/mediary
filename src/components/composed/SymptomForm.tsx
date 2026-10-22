@@ -6,11 +6,17 @@ import { Input } from '@/components/ui/Input';
 import { Toggle } from '@/components/ui/Toggle';
 import { DatePickerField, TimePickerField } from '@/components/ui/DateTimeFields';
 import { PrimaryButton } from '@/components/ui/Button';
-import { typography, spacing, colors } from '@/theme';
+import { colors, typography, spacing } from '@/theme';
 import { DEFAULT_SYMPTOMS, SEVERITY_LEVELS, SEVERITY_LABELS } from '@/constants/symptoms';
 import type { SeverityLevel } from '@/constants/symptoms';
 import { combineDateAndTime, defaultRecordTime } from '@/lib/dateTime';
 import type { MedicationWithStock } from '@/types/domain';
+
+const SEVERITY_DOTS: Record<SeverityLevel, string> = {
+  mild: colors.accentBright,
+  moderate: '#E0A43A',
+  severe: '#E5484D',
+};
 
 export interface SymptomFormValues {
   name: string;
@@ -66,6 +72,7 @@ export function SymptomForm({
     <View>
       <Select
         label="Symptom"
+        icon="pulse-outline"
         value={values.isCustomName ? 'Other' : values.name || null}
         options={DEFAULT_SYMPTOMS.map((s) => ({ value: s, label: s }))}
         onChange={(v) => {
@@ -80,7 +87,7 @@ export function SymptomForm({
 
       <Text style={styles.label}>Severity</Text>
       <SegmentedControl
-        segments={SEVERITY_LEVELS.map((s) => ({ value: s, label: SEVERITY_LABELS[s] }))}
+        segments={SEVERITY_LEVELS.map((s) => ({ value: s, label: SEVERITY_LABELS[s], dot: SEVERITY_DOTS[s] }))}
         value={values.severity}
         onChange={(v) => update('severity', v)}
       />
@@ -89,6 +96,7 @@ export function SymptomForm({
         <Select
           label="Related medication / treatment (optional)"
           placeholder="None"
+          icon="water-outline"
           value={values.medicationId}
           options={medications.map((m) => ({ value: m.id, label: m.name }))}
           onChange={(v) => update('medicationId', v)}
@@ -100,7 +108,9 @@ export function SymptomForm({
         <TimePickerField label="Start time" value={values.startAt} onChange={(t) => update('startAt', combineDateAndTime(values.startAt, t))} containerStyle={styles.rowField} />
       </View>
 
-      <Toggle label="Ongoing" value={values.isOngoing} onValueChange={(v) => update('isOngoing', v)} />
+      <View style={styles.ongoing}>
+        <Toggle label="Ongoing" icon="sync-outline" value={values.isOngoing} onValueChange={(v) => update('isOngoing', v)} />
+      </View>
 
       {!values.isOngoing && (
         <View style={styles.row}>
@@ -129,12 +139,12 @@ export function SymptomForm({
 
 const styles = StyleSheet.create({
   label: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    ...typography.label,
     marginBottom: spacing.xs,
+    marginLeft: spacing.xxs,
   },
   row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   rowField: { flex: 1 },
+  ongoing: { borderTopWidth: 1, borderTopColor: colors.dividerSoft, marginBottom: spacing.sm },
   submitButton: { marginTop: spacing.lg, marginBottom: spacing.xl },
 });

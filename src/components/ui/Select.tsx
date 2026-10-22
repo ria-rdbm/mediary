@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '@/theme';
+import { colors, typography, spacing } from '@/theme';
 import { BottomSheet } from './BottomSheet';
+import { fieldStyles } from './fieldStyles';
 
 export interface SelectOption<T extends string> {
   value: T;
@@ -17,6 +18,8 @@ interface SelectProps<T extends string> {
   onChange: (value: T) => void;
   helperText?: string;
   required?: boolean;
+  /** Optional leading icon, shown in a white puck inside the field. */
+  icon?: keyof typeof Ionicons.glyphMap;
   containerStyle?: ViewStyle;
 }
 
@@ -28,26 +31,32 @@ export function Select<T extends string>({
   onChange,
   helperText,
   required,
+  icon,
   containerStyle,
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[fieldStyles.container, containerStyle]}>
       {label && (
-        <Text style={styles.label}>
+        <Text style={fieldStyles.label}>
           {label}
-          {required && <Text style={{ color: colors.error }}> *</Text>}
+          {required && <Text style={fieldStyles.required}> *</Text>}
         </Text>
       )}
-      <Pressable style={styles.field} onPress={() => setOpen(true)} accessibilityRole="button">
-        <Text style={[typography.body, !selected && { color: colors.textMuted }]}>
+      <Pressable style={fieldStyles.field} onPress={() => setOpen(true)} accessibilityRole="button">
+        {icon && (
+          <View style={fieldStyles.iconPuck}>
+            <Ionicons name={icon} size={16} color={colors.accent} />
+          </View>
+        )}
+        <Text style={selected ? fieldStyles.value : fieldStyles.placeholder} numberOfLines={1}>
           {selected?.label ?? placeholder}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+        <Ionicons name="chevron-down" size={18} color={colors.textPrimary} />
       </Pressable>
-      {helperText && <Text style={styles.helperText}>{helperText}</Text>}
+      {helperText && <Text style={fieldStyles.helperText}>{helperText}</Text>}
 
       <BottomSheet visible={open} onClose={() => setOpen(false)}>
         <Text style={[typography.sectionTitle, styles.sheetTitle]}>{label ?? placeholder}</Text>
@@ -73,28 +82,6 @@ export function Select<T extends string>({
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: spacing.md },
-  label: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
-  },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    paddingHorizontal: spacing.sm,
-    minHeight: 44,
-  },
-  helperText: {
-    ...typography.caption,
-    marginTop: spacing.xxs,
-  },
   sheetTitle: {
     marginBottom: spacing.sm,
   },
@@ -102,8 +89,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 52,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.dividerSoft,
   },
 });

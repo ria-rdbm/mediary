@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, Redirect } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
-import { colors, typography, spacing, radius } from '@/theme';
+import { colors, fonts, typography, spacing, radius } from '@/theme';
 import {
   PRIVACY_POLICY,
   TERMS_OF_USE,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   sectionNum: {
     ...typography.metadata,
     color: colors.accent,
-    fontWeight: '700',
+    fontFamily: fonts.semibold,
   },
   sectionTitle: {
     ...typography.sectionTitle,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   bold: {
-    fontWeight: '700',
+    fontFamily: fonts.semibold,
     color: colors.textPrimary,
   },
   callout: {

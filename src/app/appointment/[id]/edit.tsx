@@ -10,6 +10,7 @@ import { IconButton, TextButton } from '@/components/ui/Button';
 import { LoadingState, ErrorState } from '@/components/ui/States';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { DatePickerField, TimePickerField } from '@/components/ui/DateTimeFields';
+import { Chip } from '@/components/ui/Chip';
 import { AppointmentCoreForm } from '@/components/composed/AppointmentCoreForm';
 import { colors, typography, spacing } from '@/theme';
 import { useMedications } from '@/hooks/useMedications';
@@ -198,15 +199,14 @@ export default function EditAppointmentScreen() {
         ))}
         <View style={styles.presetRow}>
           {APPOINTMENT_REMINDER_PRESETS.map((preset) => (
-            <Pressable
+            <Chip
               key={preset.label}
-              style={styles.presetChip}
+              label={preset.label}
+              icon="add"
               onPress={() =>
                 preset.minutesBefore != null ? handleAddPresetReminder(preset.minutesBefore) : setCustomReminderVisible(true)
               }
-            >
-              <Text style={styles.presetLabel}>{preset.label}</Text>
-            </Pressable>
+            />
           ))}
         </View>
         {customReminderVisible && (
@@ -266,16 +266,5 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.xs,
     marginTop: spacing.xs,
-  },
-  presetChip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: colors.surfaceSecondary,
-  },
-  presetLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
   },
 });

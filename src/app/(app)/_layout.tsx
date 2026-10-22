@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthProvider';
-import { colors } from '@/theme';
+import { PillTabBar } from '@/components/composed/PillTabBar';
 
 export default function AppTabsLayout() {
   const { status } = useAuth();
@@ -12,14 +12,7 @@ export default function AppTabsLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.accentStrong,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.divider },
-      }}
-    >
+    <Tabs tabBar={(props) => <PillTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen
         name="home"
         options={{ title: 'Home', tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} /> }}

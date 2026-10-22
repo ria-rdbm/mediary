@@ -1,17 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Header } from '@/components/ui/Header';
 import { DatePickerField, TimePickerField } from '@/components/ui/DateTimeFields';
 import { PrimaryButton, TextButton } from '@/components/ui/Button';
 import { LoadingState } from '@/components/ui/States';
-import { colors, typography, spacing } from '@/theme';
+import { LiquidCard } from '@/components/ui/LiquidCard';
+import { InitialAvatar } from '@/components/ui/InitialAvatar';
+import { colors, fonts, typography, spacing } from '@/theme';
 import { useMedication } from '@/hooks/useMedications';
 import { useRemindersForMedication, useUpsertMedicationReminder, useDeleteMedicationReminder } from '@/hooks/useReminders';
 import { useWriteGuard } from '@/hooks/useWriteGuard';
 import { requestNotificationPermission, scheduleLocalNotification, cancelLocalNotification, combineDateTime } from '@/lib/notifications';
-import { combineDateAndTime, defaultRecordTime, parseDateKey, todayDateKey } from '@/lib/dateTime';
+import { captureLocalDateTime, combineDateAndTime, defaultRecordTime, formatLocalDate, formatLocalTime, parseDateKey, todayDateKey } from '@/lib/dateTime';
 
 export default function MedicationReminderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -97,6 +99,18 @@ export default function MedicationReminderScreen() {
   return (
     <Screen scroll>
       <Header title="Reminder" />
+      <LiquidCard style={styles.hero}>
+        <View style={styles.heroTop}>
+          <InitialAvatar name={medication.name} size={42} tone="onAccent" />
+          <Text style={styles.heroName} numberOfLines={1}>
+            {medication.name}
+          </Text>
+        </View>
+        <View>
+          <Text style={styles.heroTime}>{formatLocalTime(captureLocalDateTime(combineDateAndTime(date, time)).local)}</Text>
+          <Text style={styles.heroDate}>{formatLocalDate(captureLocalDateTime(date).local)}</Text>
+        </View>
+      </LiquidCard>
       <Text style={[typography.bodySecondary, styles.subtitle]}>
         Set a single reminder for {medication.name}. This does not calculate your next dose.
       </Text>
@@ -112,7 +126,12 @@ export default function MedicationReminderScreen() {
 }
 
 const styles = StyleSheet.create({
-  subtitle: { marginBottom: spacing.md, color: colors.textSecondary },
+  hero: { height: 160, justifyContent: 'space-between', marginTop: spacing.xs },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  heroName: { flex: 1, fontFamily: fonts.semibold, fontSize: 17, color: colors.textOnAccent },
+  heroTime: { fontFamily: fonts.serif, fontSize: 40, lineHeight: 44, letterSpacing: -0.8, color: colors.textOnAccent },
+  heroDate: { fontFamily: fonts.regular, fontSize: 14, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
+  subtitle: { marginTop: 18, marginBottom: spacing.md, marginHorizontal: spacing.xxs, color: colors.textSecondary },
   error: { color: colors.error, marginTop: spacing.sm },
   saveButton: { marginTop: spacing.sm, marginBottom: spacing.xs },
 });

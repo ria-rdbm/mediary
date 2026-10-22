@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Platform, StyleSheet, type ViewStyle } from 'react-native';
+import { View, Text, Pressable, Platform, type ViewStyle } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '@/theme';
+import { colors, typography, spacing } from '@/theme';
 import { BottomSheet } from './BottomSheet';
+import { fieldStyles } from './fieldStyles';
 import { PrimaryButton } from './Button';
 import { formatLocalDate, formatLocalTime, captureLocalDateTime } from '@/lib/dateTime';
 
@@ -54,16 +55,18 @@ function Field({
   };
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[fieldStyles.container, containerStyle]}>
       {label && (
-        <Text style={styles.label}>
+        <Text style={fieldStyles.label}>
           {label}
-          {required && <Text style={{ color: colors.error }}> *</Text>}
+          {required && <Text style={fieldStyles.required}> *</Text>}
         </Text>
       )}
-      <Pressable style={styles.field} onPress={openPicker} accessibilityRole="button">
-        <Ionicons name={icon} size={18} color={colors.textMuted} style={{ marginRight: spacing.xs }} />
-        <Text style={placeholder ? [typography.body, { color: colors.textMuted }] : typography.body}>
+      <Pressable style={fieldStyles.field} onPress={openPicker} accessibilityRole="button">
+        <View style={fieldStyles.iconPuck}>
+          <Ionicons name={icon} size={16} color={colors.accent} />
+        </View>
+        <Text style={placeholder ? fieldStyles.placeholder : fieldStyles.value} numberOfLines={1}>
           {placeholder ?? displayValue(value, mode)}
         </Text>
       </Pressable>
@@ -99,23 +102,3 @@ export function DatePickerField(props: FieldProps) {
 export function TimePickerField(props: FieldProps) {
   return <Field {...props} mode="time" icon="time-outline" />;
 }
-
-const styles = StyleSheet.create({
-  container: { marginBottom: spacing.md },
-  label: {
-    ...typography.bodySecondary,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xxs,
-  },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    paddingHorizontal: spacing.sm,
-    minHeight: 44,
-  },
-});
